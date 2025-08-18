@@ -207,8 +207,19 @@ body {
 .manga-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-auto-rows: 1fr;
     gap: 2rem;
     margin-bottom: 2rem;
+}
+
+.manga-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.hidden {
+    display: none !important;
 }
 
 .features-grid {

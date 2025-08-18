@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
   initializeCart();
   initializeFilters();
   initializeNavigation();
+  updateCartCounter();
 });
 
 function initializeCart() {
@@ -46,70 +47,63 @@ function updateCartCounter() {
 }
 
 function initializeFilters() {
-  const genreFilter = document.getElementById('genreFilter');
-  const sortFilter = document.getElementById('sortFilter');
-  const stockFilter = document.getElementById('stockFilter');
-
-  if (genreFilter) {
-    genreFilter.addEventListener('change', filterMangas);
-  }
-  if (sortFilter) {
-    sortFilter.addEventListener('change', filterMangas);
-  }
-  if (stockFilter) {
-    stockFilter.addEventListener('change', filterMangas);
-  }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
   const container = document.getElementById('mangaContainer');
   if (!container) return;
 
   const cards = Array.from(container.querySelectorAll('.manga-card'));
 
-  function applyFilters() {
+  function applyFiltersAndSort() {
     const genre = document.getElementById('genreFilter').value;
     const stock = document.getElementById('stockFilter').value;
+    const sort = document.getElementById('sortFilter').value;
 
-    cards.forEach(card => {
+    let filteredCards = cards.filter(card => {
       const matchesGenre = !genre || card.dataset.genre.includes(genre);
       const matchesStock =
         !stock ||
         (stock === 'in-stock' && card.dataset.stock === '1') ||
         (stock === 'out-of-stock' && card.dataset.stock === '0');
-      card.style.display = matchesGenre && matchesStock ? 'block' : 'none';
+      return matchesGenre && matchesStock;
     });
-  }
 
-  function applySort() {
-    const sort = document.getElementById('sortFilter').value;
-    const [by, order] = sort.split('-');
-
-    const sorted = cards
-      .filter(card => card.style.display !== 'none')
-      .sort((a, b) => {
+    if (sort) {
+      const [by, order] = sort.split('-');
+      filteredCards.sort((a, b) => {
         let valA = by === 'price' ? parseFloat(a.dataset.price) : a.dataset[by].toLowerCase();
         let valB = by === 'price' ? parseFloat(b.dataset.price) : b.dataset[by].toLowerCase();
         if (valA < valB) return order === 'asc' ? -1 : 1;
         if (valA > valB) return order === 'asc' ? 1 : -1;
         return 0;
       });
+    }
 
-    sorted.forEach(card => container.appendChild(card));
+    cards.forEach(card => card.classList.add('hidden'));
+    filteredCards.forEach(card => card.classList.remove('hidden'));
+
+    filteredCards.forEach(card => container.appendChild(card));
+
+    if (filteredCards.length === 0) {
+      if (!document.querySelector('.empty-message')) {
+        const msg = document.createElement('p');
+        msg.className = 'empty-message';
+        msg.textContent = 'Нет товаров по выбранным фильтрам';
+        container.appendChild(msg);
+      }
+    } else {
+      const emptyMsg = document.querySelector('.empty-message');
+      if (emptyMsg) emptyMsg.remove();
+    }
   }
 
-  ['genreFilter', 'stockFilter'].forEach(id => {
-    document.getElementById(id).addEventListener('change', () => {
-      applyFilters();
-      applySort();
-    });
+  ['genreFilter', 'stockFilter', 'sortFilter'].forEach(id => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.addEventListener('change', applyFiltersAndSort);
+    }
   });
 
-  document.getElementById('sortFilter').addEventListener('change', applySort);
-
-  applyFilters();
-  applySort();
-});
+  applyFiltersAndSort();
+}
 
 
 
@@ -124,6 +118,7 @@ function initializeNavigation() {
   });
 }
 
+
 function showNotification(message, type = 'info') {
   const notification = document.createElement('div');
   notification.className = `notification notification-${type}`;
@@ -136,7 +131,6 @@ function showNotification(message, type = 'info') {
 
   document.body.appendChild(notification);
 
-  // Auto remove after 3 seconds
   setTimeout(() => {
     if (notification.parentNode) {
       notification.parentNode.removeChild(notification);
@@ -150,5 +144,3 @@ function showNotification(message, type = 'info') {
     }
   });
 }
-
-document.addEventListener('DOMContentLoaded', updateCartCounter);

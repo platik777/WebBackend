@@ -37,14 +37,7 @@
 <div class="catalog-content">
   <div class="manga-grid" id="mangaContainer">
     {{#each mangas}}
-      <div class="manga-card {{#unless inStock}}out-of-stock{{/unless}}"
-           data-title="{{title}}"
-           data-price="{{price}}"
-           data-author="{{author}}"
-           data-genre="{{genre}}"
-           data-stock="{{#if inStock}}1{{else}}0{{/if}}">
         {{> manga-card this}}
-      </div>
     {{/each}}
   </div>
 </div>
