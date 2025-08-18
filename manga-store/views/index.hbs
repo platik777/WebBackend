@@ -1,0 +1,45 @@
+<div class="hero-section">
+  <div class="hero-content">
+    <h1 class="hero-title">Добро пожаловать в Manga Store!</h1>
+    <p class="hero-subtitle">Крупнейший магазин японской манги с доставкой по всей России</p>
+    <a href="/catalog" class="btn btn-primary btn-large">Перейти в каталог</a>
+  </div>
+  <div class="hero-image">
+    <img src="/images/hero-manga.jpg" alt="Коллекция манги" />
+  </div>
+</div>
+
+<section class="featured-section">
+  <h2 class="section-title">Рекомендуемые новинки</h2>
+  <div class="manga-grid">
+    {{#each featuredMangas}}
+      {{> manga-card this}}
+    {{/each}}
+  </div>
+</section>
+
+<section class="features-section">
+  <h2 class="section-title">Почему выбирают нас?</h2>
+  <div class="features-grid">
+    <div class="feature-card">
+      <i class="fas fa-shipping-fast feature-icon"></i>
+      <h3>Быстрая доставка</h3>
+      <p>Доставка по Москве в день заказа, по России за 1-3 дня</p>
+    </div>
+    <div class="feature-card">
+      <i class="fas fa-shield-alt feature-icon"></i>
+      <h3>Гарантия качества</h3>
+      <p>Только оригинальная продукция от официальных издательств</p>
+    </div>
+    <div class="feature-card">
+      <i class="fas fa-credit-card feature-icon"></i>
+      <h3>Удобная оплата</h3>
+      <p>Принимаем все виды карт, электронные деньги и наличные</p>
+    </div>
+    <div class="feature-card">
+      <i class="fas fa-headset feature-icon"></i>
+      <h3>Поддержка 24/7</h3>
+      <p>Наша команда готова помочь вам в любое время</p>
+    </div>
+  </div>
+</section>

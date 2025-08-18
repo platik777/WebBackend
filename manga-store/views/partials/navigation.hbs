@@ -1,0 +1,18 @@
+<nav class="main-nav">
+  <ul class="nav-list">
+    <li class="nav-item">
+      <a href="/" class="nav-link">Главная</a>
+    </li>
+    <li class="nav-item">
+      <a href="/catalog" class="nav-link">Каталог</a>
+    </li>
+    <li class="nav-item">
+      <a href="/about" class="nav-link">О нас</a>
+    </li>
+    {{#if user}}
+      <li class="nav-item">
+        <a href="/orders" class="nav-link">Мои заказы</a>
+      </li>
+    {{/if}}
+  </ul>
+</nav>

@@ -1,0 +1,36 @@
+<div class="manga-card {{#unless inStock}}out-of-stock{{/unless}}"
+     data-genre="{{genre}}"
+     data-price="{{price}}"
+     data-title="{{title}}"
+     data-stock="{{#if inStock}}1{{else}}0{{/if}}">
+  <div class="manga-image">
+    <img src="{{image}}" alt="{{title}}" loading="lazy" />
+    {{#unless inStock}}
+      <div class="stock-overlay">
+        <span>Нет в наличии</span>
+      </div>
+    {{/unless}}
+  </div>
+
+  <div class="manga-info">
+    <h3 class="manga-title">{{title}}</h3>
+    <p class="manga-author">{{author}}</p>
+    {{#if genre}}
+      <p class="manga-genre">{{genre}}</p>
+    {{/if}}
+
+    <div class="manga-footer">
+      <div class="manga-price">{{price}} ₽</div>
+      {{#if inStock}}
+        <button class="btn btn-primary btn-small add-to-cart" data-manga-id="{{id}}">
+          <i class="fas fa-shopping-cart"></i>
+          В корзину
+        </button>
+      {{else}}
+        <button class="btn btn-disabled btn-small" disabled>
+          Нет в наличии
+        </button>
+      {{/if}}
+    </div>
+  </div>
+</div>

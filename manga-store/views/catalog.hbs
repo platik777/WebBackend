@@ -1,0 +1,58 @@
+<div class="catalog-header">
+  <h1 class="page-title">Каталог манги</h1>
+  <div class="catalog-filters">
+    <div class="filter-group">
+      <label>Жанр:</label>
+      <select class="filter-select" id="genreFilter">
+        <option value="">Все жанры</option>
+        <option value="Экшен">Экшен</option>
+        <option value="Романтика">Романтика</option>
+        <option value="Комедия">Комедия</option>
+        <option value="Драма">Драма</option>
+        <option value="Приключения">Приключения</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Сортировка:</label>
+      <select class="filter-select" id="sortFilter">
+        <option value="title-asc">По названию ↑</option>
+        <option value="title-desc">По названию ↓</option>
+        <option value="price-asc">Цена ↑</option>
+        <option value="price-desc">Цена ↓</option>
+        <option value="author-asc">По автору ↑</option>
+        <option value="author-desc">По автору ↓</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Доступность:</label>
+      <select class="filter-select" id="stockFilter">
+        <option value="">Все товары</option>
+        <option value="in-stock">В наличии</option>
+        <option value="out-of-stock">Нет в наличии</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<div class="catalog-content">
+  <div class="manga-grid" id="mangaContainer">
+    {{#each mangas}}
+      <div class="manga-card {{#unless inStock}}out-of-stock{{/unless}}"
+           data-title="{{title}}"
+           data-price="{{price}}"
+           data-author="{{author}}"
+           data-genre="{{genre}}"
+           data-stock="{{#if inStock}}1{{else}}0{{/if}}">
+        {{> manga-card this}}
+      </div>
+    {{/each}}
+  </div>
+</div>
+
+{{#unless mangas.length}}
+  <div class="empty-catalog">
+    <i class="fas fa-book-open empty-icon"></i>
+    <h3>Каталог временно пуст</h3>
+    <p>Мы работаем над пополнением ассортимента</p>
+  </div>
+{{/unless}}

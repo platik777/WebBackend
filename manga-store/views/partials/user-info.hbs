@@ -1,0 +1,22 @@
+{{#if user}}
+  <!-- Авторизованный пользователь -->
+  <div class="user-info">
+    <div class="user-avatar">
+      <i class="fas fa-user-circle"></i>
+    </div>
+    <div class="user-details">
+      <span class="user-name">{{user.name}}</span>
+      <span class="user-email">{{user.email}}</span>
+    </div>
+    <div class="user-actions">
+      <a href="/profile" class="btn btn-outline">Профиль</a>
+      <a href="/logout" class="btn btn-primary">Выйти</a>
+    </div>
+  </div>
+{{else}}
+  <!-- Неавторизованный пользователь -->
+  <div class="auth-actions">
+    <a href="/login" class="btn btn-outline">Войти</a>
+    <a href="/register" class="btn btn-primary">Регистрация</a>
+  </div>
+{{/if}}
