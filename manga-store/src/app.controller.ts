@@ -10,11 +10,14 @@ export class AppController {
   getHomePage(@Query('auth') isAuthenticated?: string) {
     return {
       title: 'Manga Store - Главная',
-      user: isAuthenticated === 'true' ? {
-        name: 'Пользователь',
-        email: 'user@example.com',
-        isAuthenticated: true
-      } : null,
+      user:
+        isAuthenticated === 'true'
+          ? {
+              name: 'Пользователь',
+              email: 'user@example.com',
+              isAuthenticated: true,
+            }
+          : null,
       featuredMangas: [
         {
           id: 1,
@@ -22,8 +25,9 @@ export class AppController {
           author: 'Hajime Isayama',
           price: 599,
           image: '/images/aot.jpg',
-          description: 'Эпическая история о человечестве, борющемся за выживание против титанов.',
-          inStock: true
+          description:
+            'Эпическая история о человечестве, борющемся за выживание против титанов.',
+          inStock: true,
         },
         {
           id: 2,
@@ -31,8 +35,9 @@ export class AppController {
           author: 'Eiichiro Oda',
           price: 699,
           image: '/images/onepiece.jpg',
-          description: 'Приключения Монки Д. Луффи в поисках легендарного сокровища.',
-          inStock: true
+          description:
+            'Приключения Монки Д. Луффи в поисках легендарного сокровища.',
+          inStock: true,
         },
         {
           id: 3,
@@ -41,9 +46,9 @@ export class AppController {
           price: 549,
           image: '/images/demonslayer.jpg',
           description: 'История юноши, ставшего охотником на демонов.',
-          inStock: true
-        }
-      ]
+          inStock: true,
+        },
+      ],
     };
   }
 
@@ -52,11 +57,14 @@ export class AppController {
   getCatalogPage(@Query('auth') isAuthenticated?: string) {
     return {
       title: 'Каталог манги',
-      user: isAuthenticated === 'true' ? {
-        name: 'Пользователь',
-        email: 'user@example.com',
-        isAuthenticated: true
-      } : null,
+      user:
+        isAuthenticated === 'true'
+          ? {
+              name: 'Пользователь',
+              email: 'user@example.com',
+              isAuthenticated: true,
+            }
+          : null,
       mangas: [
         {
           id: 1,
@@ -65,7 +73,7 @@ export class AppController {
           price: 599,
           image: '/images/aot.jpg',
           genre: 'Экшен, Драма',
-          inStock: true
+          inStock: true,
         },
         {
           id: 2,
@@ -74,7 +82,7 @@ export class AppController {
           price: 699,
           image: '/images/onepiece.jpg',
           genre: 'Приключения, Комедия',
-          inStock: true
+          inStock: true,
         },
         {
           id: 3,
@@ -83,7 +91,7 @@ export class AppController {
           price: 549,
           image: '/images/demonslayer.jpg',
           genre: 'Экшен, Сверхъестественное',
-          inStock: false
+          inStock: false,
         },
         {
           id: 4,
@@ -92,9 +100,9 @@ export class AppController {
           price: 579,
           image: '/images/mha.jpg',
           genre: 'Супергерои, Школа',
-          inStock: true
-        }
-      ]
+          inStock: true,
+        },
+      ],
     };
   }
 
@@ -103,11 +111,14 @@ export class AppController {
   getAboutPage(@Query('auth') isAuthenticated?: string) {
     return {
       title: 'О нас',
-      user: isAuthenticated === 'true' ? {
-        name: 'Пользователь',
-        email: 'user@example.com',
-        isAuthenticated: true
-      } : null
+      user:
+        isAuthenticated === 'true'
+          ? {
+              name: 'Пользователь',
+              email: 'user@example.com',
+              isAuthenticated: true,
+            }
+          : null,
     };
   }
 }

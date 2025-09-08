@@ -1,0 +1,192 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  firstName String   @map("first_name")
+  lastName  String   @map("last_name")
+  phone     String?
+  address   String?
+  city      String?
+  isActive  Boolean  @default(true) @map("is_active")
+  isAdmin   Boolean  @default(false) @map("is_admin")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  orders  Order[]
+  reviews Review[]
+
+  @@map("users")
+}
+
+model Publisher {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique
+  description String?
+  country     String?
+  website     String?
+  isActive    Boolean @default(true) @map("is_active")
+
+  mangas Manga[]
+
+  @@map("publishers")
+}
+
+model Author {
+  id          Int       @id @default(autoincrement())
+  firstName   String    @map("first_name")
+  lastName    String    @map("last_name")
+  pseudonym   String?
+  biography   String?
+  birthDate   DateTime? @map("birth_date")
+  nationality String?
+  isActive    Boolean   @default(true) @map("is_active")
+
+  mangaAuthors MangaAuthor[]
+
+  @@map("authors")
+}
+
+model Genre {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique
+  description String?
+  isActive    Boolean @default(true) @map("is_active")
+
+  mangaGenres MangaGenre[]
+
+  @@map("genres")
+}
+
+model Manga {
+  id            Int       @id @default(autoincrement())
+  title         String
+  description   String?
+  isbn          String?   @unique
+  price         Decimal   @db.Decimal(10, 2)
+  discountPrice Decimal?  @map("discount_price") @db.Decimal(10, 2)
+  stock         Int       @default(0)
+  pages         Int?
+  language      String    @default("Russian")
+  imageUrl      String?   @map("image_url")
+  isActive      Boolean   @default(true) @map("is_active")
+  isFeatured    Boolean   @default(false) @map("is_featured")
+  publishDate   DateTime? @map("publish_date")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  publisherId Int       @map("publisher_id")
+  publisher   Publisher @relation(fields: [publisherId], references: [id])
+
+  mangaAuthors MangaAuthor[]
+  mangaGenres  MangaGenre[]
+  orderItems   OrderItem[]
+  reviews      Review[]
+
+  @@map("mangas")
+}
+
+model MangaAuthor {
+  id       Int @id @default(autoincrement())
+  mangaId  Int @map("manga_id")
+  authorId Int @map("author_id")
+
+  manga  Manga  @relation(fields: [mangaId], references: [id], onDelete: Cascade)
+  author Author @relation(fields: [authorId], references: [id])
+
+  @@unique([mangaId, authorId])
+  @@map("manga_authors")
+}
+
+model MangaGenre {
+  id      Int @id @default(autoincrement())
+  mangaId Int @map("manga_id")
+  genreId Int @map("genre_id")
+
+  manga Manga @relation(fields: [mangaId], references: [id], onDelete: Cascade)
+  genre Genre @relation(fields: [genreId], references: [id])
+
+  @@unique([mangaId, genreId])
+  @@map("manga_genres")
+}
+
+model Order {
+  id          Int         @id @default(autoincrement())
+  orderNumber String      @unique @map("order_number")
+  status      OrderStatus @default(PENDING)
+  totalAmount Decimal     @map("total_amount") @db.Decimal(10, 2)
+
+  shippingAddress String @map("shipping_address")
+  shippingCity    String @map("shipping_city")
+  shippingPhone   String @map("shipping_phone")
+
+  paymentMethod String?       @map("payment_method")
+  paymentStatus PaymentStatus @default(PENDING) @map("payment_status")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  shippedAt DateTime? @map("shipped_at")
+
+  userId Int  @map("user_id")
+  user   User @relation(fields: [userId], references: [id])
+
+  orderItems OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id       Int     @id @default(autoincrement())
+  quantity Int
+  price    Decimal @db.Decimal(10, 2)
+
+  orderId Int @map("order_id")
+  mangaId Int @map("manga_id")
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  manga Manga @relation(fields: [mangaId], references: [id])
+
+  @@unique([orderId, mangaId])
+  @@map("order_items")
+}
+
+model Review {
+  id      Int     @id @default(autoincrement())
+  rating  Int // от 1 до 5
+  comment String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  userId  Int @map("user_id")
+  mangaId Int @map("manga_id")
+
+  user  User  @relation(fields: [userId], references: [id])
+  manga Manga @relation(fields: [mangaId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, mangaId])
+  @@map("reviews")
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}

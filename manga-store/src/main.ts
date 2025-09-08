@@ -19,9 +19,15 @@ async function bootstrap() {
   app.setViewEngine('hbs');
 
   hbs.registerPartials(join(process.cwd(), 'views', 'partials'));
-  const mangaCardPartial = readFileSync(join(process.cwd(), 'views', 'partials', 'manga-card.hbs'), 'utf8');
+  const mangaCardPartial = readFileSync(
+    join(process.cwd(), 'views', 'partials', 'manga-card.hbs'),
+    'utf8',
+  );
   hbs.registerPartial('manga-card', mangaCardPartial);
-  const user_info = readFileSync(join(process.cwd(), 'views', 'partials', 'user-info.hbs'), 'utf8');
+  const user_info = readFileSync(
+    join(process.cwd(), 'views', 'partials', 'user-info.hbs'),
+    'utf8',
+  );
   hbs.registerPartial('user-info', user_info);
   hbs.registerHelper('eq', (a, b) => a === b);
 
