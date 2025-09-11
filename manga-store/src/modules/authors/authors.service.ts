@@ -18,12 +18,16 @@ export class AuthorsService {
     const author = await this.prisma.author.findUnique({
       where: { id },
       include: {
-        mangas: {
-          select: {
-            id: true,
-            title: true,
-            price: true,
-            imageUrl: true,
+        mangaAuthors: {
+          include: {
+            manga: {
+              select: {
+                id: true,
+                title: true,
+                price: true,
+                imageUrl: true,
+              },
+            },
           },
         },
       },

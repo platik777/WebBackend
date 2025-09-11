@@ -14,11 +14,18 @@ export class OrdersService {
       return total.add(new Decimal(item.price).mul(item.quantity));
     }, new Decimal(0));
 
+    // Генерируем номер заказа
+    const orderNumber = Order.generateOrderNumber();
+
     const orderData = await this.prisma.order.create({
       data: {
+        orderNumber,
         status: 'PENDING',
         totalAmount,
         userId: createOrderDto.userId,
+        shippingAddress: createOrderDto.shippingAddress,
+        shippingCity: createOrderDto.shippingCity,
+        shippingPhone: createOrderDto.shippingPhone,
         orderItems: {
           create: createOrderDto.items.map((item) => ({
             mangaId: item.mangaId,
@@ -115,7 +122,7 @@ export class OrdersService {
 
   async updateStatus(
     id: number,
-    status: 'PENDING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED',
+    status: 'PENDING' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED',
   ): Promise<Order> {
     const order = await this.prisma.order.update({
       where: { id },

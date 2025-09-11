@@ -32,4 +32,7 @@ export class CreateMangaDto {
 
   @IsInt()
   genreId: number;
+
+  @IsInt()
+  publisherId: number;
 }

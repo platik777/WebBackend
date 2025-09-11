@@ -4,7 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="63c10e85-0056-4f26-a06b-cd4ca0dd653f" name="Changes" comment="" />
+    <list default="true" id="63c10e85-0056-4f26-a06b-cd4ca0dd653f" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -18,7 +20,12 @@
     </option>
   </component>
   <component name="Git.Settings">
-    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/manga-store" />
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="lab1" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
     <option name="ROOT_SYNC" value="DONT_SYNC" />
   </component>
   <component name="ProjectColorInfo">{
@@ -31,25 +38,101 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "Docker.manga-store/docker-compose.yaml.postgres: Compose Deployment.executor": "Run",
+    "Docker.manga-store/docker-compose.yaml: Compose Deployment.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "lab1",
+    "git-widget-placeholder": "lab2",
     "javascript.nodejs.core.library.configured.version": "22.17.0",
     "javascript.nodejs.core.library.typings.version": "22.15.33",
-    "last_opened_file_path": "D:/LabsProga/web/m3308-sidorov",
+    "last_opened_file_path": "D:/LabsProga/web/m3308-sidorov/manga-store/src/authors",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
+    "npm.start:dev.executor": "Run",
+    "settings.editor.selected.configurable": "project.propVCSSupport.DirectoryMappings",
     "ts.external.directory.path": "D:\\LabsProga\\web\\m3308-sidorov\\manga-store\\node_modules\\typescript\\lib",
     "vue.rearranger.settings.migration": "true"
+  },
+  "keyToStringList": {
+    "DatabaseDriversLRU": [
+      "postgresql"
+    ]
   }
 }]]></component>
   <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\LabsProga\web\m3308-sidorov\manga-store\src\authors" />
+      <recent name="D:\LabsProga\web\m3308-sidorov\manga-store\src\reviews" />
+      <recent name="D:\LabsProga\web\m3308-sidorov\manga-store\src\orders" />
+    </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\LabsProga\web\m3308-sidorov\manga-store\src\modules" />
       <recent name="D:\LabsProga\web\m3308-sidorov\manga-store\views\layouts" />
       <recent name="D:\LabsProga\web\m3308-sidorov\manga-store\views\partials" />
     </key>
+  </component>
+  <component name="RunManager" selected="Docker.manga-store/docker-compose.yaml: Compose Deployment">
+    <configuration default="true" type="docker-deploy" factoryName="docker-compose.yml" temporary="true">
+      <deployment type="docker-compose.yml" />
+      <method v="2" />
+    </configuration>
+    <configuration name="manga-store/docker-compose.yaml: Compose Deployment" type="docker-deploy" factoryName="docker-compose.yml" temporary="true" server-name="Docker">
+      <deployment type="docker-compose.yml">
+        <settings>
+          <option name="sourceFilePath" value="manga-store/docker-compose.yaml" />
+        </settings>
+      </deployment>
+      <method v="2" />
+    </configuration>
+    <configuration name="manga-store/docker-compose.yaml.postgres: Compose Deployment" type="docker-deploy" factoryName="docker-compose.yml" temporary="true" server-name="Docker">
+      <deployment type="docker-compose.yml">
+        <settings>
+          <option name="services">
+            <list>
+              <option value="postgres" />
+            </list>
+          </option>
+          <option name="sourceFilePath" value="manga-store/docker-compose.yaml" />
+        </settings>
+      </deployment>
+      <method v="2" />
+    </configuration>
+    <configuration name="build" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
+      <package-json value="$PROJECT_DIR$/manga-store/package.json" />
+      <command value="run" />
+      <scripts>
+        <script value="build" />
+      </scripts>
+      <node-interpreter value="project" />
+      <envs />
+      <method v="2" />
+    </configuration>
+    <configuration name="start:dev" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
+      <package-json value="$PROJECT_DIR$/manga-store/package.json" />
+      <command value="run" />
+      <scripts>
+        <script value="start:dev" />
+      </scripts>
+      <node-interpreter value="project" />
+      <envs />
+      <method v="2" />
+    </configuration>
+    <list>
+      <item itemvalue="Docker.manga-store/docker-compose.yaml.postgres: Compose Deployment" />
+      <item itemvalue="Docker.manga-store/docker-compose.yaml: Compose Deployment" />
+      <item itemvalue="npm.build" />
+      <item itemvalue="npm.start:dev" />
+    </list>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Docker.manga-store/docker-compose.yaml: Compose Deployment" />
+        <item itemvalue="Docker.manga-store/docker-compose.yaml.postgres: Compose Deployment" />
+        <item itemvalue="npm.start:dev" />
+        <item itemvalue="npm.build" />
+      </list>
+    </recent_temporary>
   </component>
   <component name="SharedIndexes">
     <attachedChunks>
@@ -70,10 +153,26 @@
       <workItem from="1751038332853" duration="11029000" />
       <workItem from="1755433293962" duration="2276000" />
       <workItem from="1755451844095" duration="7897000" />
+      <workItem from="1756922659162" duration="3207000" />
+      <workItem from="1756972243543" duration="5878000" />
+      <workItem from="1757142494931" duration="3913000" />
+      <workItem from="1757346070762" duration="3553000" />
+      <workItem from="1757582350452" duration="4605000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
 </project>

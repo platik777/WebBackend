@@ -12,12 +12,35 @@ export class MangaService {
   async create(createMangaDto: CreateMangaDto): Promise<Manga> {
     const mangaData = await this.prisma.manga.create({
       data: {
-        ...createMangaDto,
+        title: createMangaDto.title,
+        description: createMangaDto.description,
         price: new Decimal(createMangaDto.price),
+        stock: createMangaDto.stock,
+        imageUrl: createMangaDto.imageUrl,
+        publisherId: createMangaDto.publisherId,
+        mangaAuthors: {
+          create: {
+            authorId: createMangaDto.authorId,
+          },
+        },
+        mangaGenres: {
+          create: {
+            genreId: createMangaDto.genreId,
+          },
+        },
       },
       include: {
-        author: true,
-        genre: true,
+        publisher: true,
+        mangaAuthors: {
+          include: {
+            author: true,
+          },
+        },
+        mangaGenres: {
+          include: {
+            genre: true,
+          },
+        },
       },
     });
 
@@ -35,30 +58,38 @@ export class MangaService {
 
     if (filters) {
       if (filters.genre) {
-        where.genre = {
-          name: {
-            contains: filters.genre,
-            mode: 'insensitive',
+        where.mangaGenres = {
+          some: {
+            genre: {
+              name: {
+                contains: filters.genre,
+                mode: 'insensitive',
+              },
+            },
           },
         };
       }
 
       if (filters.author) {
-        where.author = {
-          OR: [
-            {
-              firstName: {
-                contains: filters.author,
-                mode: 'insensitive',
-              },
+        where.mangaAuthors = {
+          some: {
+            author: {
+              OR: [
+                {
+                  firstName: {
+                    contains: filters.author,
+                    mode: 'insensitive',
+                  },
+                },
+                {
+                  lastName: {
+                    contains: filters.author,
+                    mode: 'insensitive',
+                  },
+                },
+              ],
             },
-            {
-              lastName: {
-                contains: filters.author,
-                mode: 'insensitive',
-              },
-            },
-          ],
+          },
         };
       }
 
@@ -78,8 +109,17 @@ export class MangaService {
     const mangas = await this.prisma.manga.findMany({
       where,
       include: {
-        author: true,
-        genre: true,
+        publisher: true,
+        mangaAuthors: {
+          include: {
+            author: true,
+          },
+        },
+        mangaGenres: {
+          include: {
+            genre: true,
+          },
+        },
         reviews: {
           select: {
             rating: true,
@@ -98,8 +138,17 @@ export class MangaService {
     const manga = await this.prisma.manga.findUnique({
       where: { id },
       include: {
-        author: true,
-        genre: true,
+        publisher: true,
+        mangaAuthors: {
+          include: {
+            author: true,
+          },
+        },
+        mangaGenres: {
+          include: {
+            genre: true,
+          },
+        },
         reviews: {
           include: {
             user: {
@@ -124,8 +173,17 @@ export class MangaService {
     // Возвращаем последние 6 добавленных манг как "рекомендуемые"
     const mangas = await this.prisma.manga.findMany({
       include: {
-        author: true,
-        genre: true,
+        publisher: true,
+        mangaAuthors: {
+          include: {
+            author: true,
+          },
+        },
+        mangaGenres: {
+          include: {
+            genre: true,
+          },
+        },
       },
       orderBy: {
         createdAt: 'desc',
@@ -143,12 +201,27 @@ export class MangaService {
       updateData.price = new Decimal(updateData.price);
     }
 
+    // Убираем поля, которые не относятся напрямую к manga
+    const { authorId, genreId, publisherId, ...mangaUpdateData } = updateData;
+
     const manga = await this.prisma.manga.update({
       where: { id },
-      data: updateData,
+      data: {
+        ...mangaUpdateData,
+        ...(publisherId && { publisherId }),
+      },
       include: {
-        author: true,
-        genre: true,
+        publisher: true,
+        mangaAuthors: {
+          include: {
+            author: true,
+          },
+        },
+        mangaGenres: {
+          include: {
+            genre: true,
+          },
+        },
       },
     });
 

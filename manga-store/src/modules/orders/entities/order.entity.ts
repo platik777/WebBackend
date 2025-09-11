@@ -24,9 +24,11 @@ export class Order implements PrismaOrder {
     Object.assign(this, partial);
   }
 
-  // Доменная логика для управления статусами заказа
   get canBeCancelled(): boolean {
-    return [OrderStatus.PENDING, OrderStatus.PROCESSING].includes(this.status);
+    return (
+      this.status === OrderStatus.PENDING ||
+      this.status === OrderStatus.PROCESSING
+    );
   }
 
   get canBeShipped(): boolean {
