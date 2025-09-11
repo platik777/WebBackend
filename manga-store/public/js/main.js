@@ -242,11 +242,6 @@ function initializeFilters() {
         </div>
       `;
       container.appendChild(msg);
-    } else {
-      const msg = document.createElement('div');
-      msg.className = 'filter-results results-count';
-      msg.textContent = `Найдено товаров: ${count}`;
-      container.insertBefore(msg, container.firstChild);
     }
   }
 
@@ -271,8 +266,9 @@ function clearFilters() {
     const cards = container.querySelectorAll('.manga-card');
     cards.forEach(card => card.classList.remove('hidden'));
 
-    const filterResults = container.querySelector('.filter-results');
-    if (filterResults) filterResults.remove();
+    // Удаляем все сообщения о результатах фильтрации
+    const filterResults = document.querySelectorAll('.filter-results');
+    filterResults.forEach(result => result.remove());
   }
 }
 

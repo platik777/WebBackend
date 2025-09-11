@@ -98,7 +98,7 @@
     ];
 
     cartItemsContainer.innerHTML = cart.map(cartItem => {
-      const item = mockItems.find(i => i.id == cartItem.id);
+      const item = mockItems.find(i => i.id === cartItem.id);
       if (!item) return '';
 
       return `

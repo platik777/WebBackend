@@ -18,7 +18,6 @@ async function bootstrap() {
   app.setBaseViewsDir(join(process.cwd(), 'views'));
   app.setViewEngine('hbs');
 
-  // Регистрация партиалов
   hbs.registerPartials(join(process.cwd(), 'views', 'partials'));
 
   const mangaCardPartial = readFileSync(
@@ -33,7 +32,6 @@ async function bootstrap() {
   );
   hbs.registerPartial('user-info', userInfoPartial);
 
-  // Регистрация хелперов
   hbs.registerHelper('eq', (a: any, b: any) => a === b);
 
   hbs.registerHelper('range', function (n: number) {

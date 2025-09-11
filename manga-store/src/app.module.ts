@@ -13,7 +13,7 @@ import { ReviewsModule } from './modules/reviews/reviews.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ['.env.local', '.env'],
+      envFilePath: '.env',
     }),
     DatabaseModule,
     UsersModule,

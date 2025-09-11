@@ -1,3 +1,25 @@
+/* Исправления для карточек манги */
+.manga-card {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.manga-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.manga-card.out-of-stock {
+    opacity: 0.7;
+}
+
 .manga-image-link {
     display: block;
     position: relative;
@@ -9,6 +31,17 @@
     height: 300px;
     overflow: hidden;
     border-radius: 8px 8px 0 0;
+}
+
+.manga-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.manga-card:hover .manga-image img {
+    transform: scale(1.05);
 }
 
 .manga-overlay {
@@ -37,6 +70,35 @@
     letter-spacing: 1px;
 }
 
+.stock-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+}
+
+.manga-info {
+    padding: 1.5rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.manga-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+    color: #2c3e50;
+}
+
 .manga-title-link {
     color: #2c3e50;
     text-decoration: none;
@@ -45,6 +107,32 @@
 
 .manga-title-link:hover {
     color: #667eea;
+}
+
+.manga-author {
+    color: #7f8c8d;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.manga-genre {
+    color: #95a5a6;
+    font-size: 0.8rem;
+    margin-bottom: 1rem;
+}
+
+.manga-footer {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.manga-price {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #ff6b6b;
+    align-self: flex-start;
 }
 
 .manga-actions {
@@ -91,37 +179,212 @@
     100% { transform: scale(1); }
 }
 
-/* Улучшенная карточка манги */
-.manga-card {
-    background: white;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    transition: all 0.3s ease;
-    position: relative;
+/* Исправления для навигации */
+.header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1rem 0;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.header-content {
     display: flex;
-    flex-direction: column;
-    height: 100%;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2rem;
 }
 
-.manga-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+.logo {
+    display: flex;
+    align-items: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    flex-shrink: 0;
 }
 
-.manga-card.out-of-stock {
-    opacity: 0.7;
+.logo a {
+    color: white;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-.manga-info {
-    padding: 1.5rem;
+.logo i {
+    font-size: 2rem;
+}
+
+.main-nav {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
     flex-grow: 1;
+}
+
+.nav-list {
+    display: flex;
+    list-style: none;
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+}
+
+.nav-item {
+    list-style: none;
+}
+
+.nav-link {
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.nav-link:hover {
+    background-color: rgba(255,255,255,0.1);
+}
+
+.cart-button {
+    position: relative;
+}
+
+.cart-counter {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #ff6b6b;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 0.7rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+}
+
+.nav-search {
+    margin-left: auto;
+    margin-right: 2rem;
+}
+
+.search-container {
+    display: flex;
+    align-items: center;
+    background: rgba(255,255,255,0.1);
+    border-radius: 25px;
+    padding: 0.25rem;
+}
+
+.search-input {
+    background: none;
+    border: none;
+    color: white;
+    padding: 0.5rem 1rem;
+    width: 200px;
+    font-size: 0.9rem;
+}
+
+.search-input::placeholder {
+    color: rgba(255,255,255,0.7);
+}
+
+.search-input:focus {
+    outline: none;
+}
+
+.search-btn {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    padding: 0.5rem;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.3s ease;
+}
+
+.search-btn:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-shrink: 0;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.user-avatar i {
+    font-size: 2rem;
+    color: #fff;
+}
+
+.user-details {
     display: flex;
     flex-direction: column;
 }
 
-.manga-footer {
-    margin-top: auto;
+.user-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.user-email {
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+.user-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.auth-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+/* Хлебные крошки */
+.breadcrumbs {
+    margin-bottom: 2rem;
+    padding: 1rem 0;
+    font-size: 0.9rem;
+}
+
+.breadcrumbs a {
+    color: #667eea;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.breadcrumbs a:hover {
+    color: #5a6fd8;
+    text-decoration: underline;
+}
+
+.breadcrumb-separator {
+    margin: 0 0.5rem;
+    color: #999;
+}
+
+.breadcrumb-current {
+    color: #666;
+    font-weight: 500;
 }
 
 /* Страница детального просмотра манги */
@@ -210,16 +473,6 @@
     display: flex;
     gap: 1rem;
     margin-bottom: 2rem;
-}
-
-.wishlist-btn {
-    border-color: #ff6b6b;
-    color: #ff6b6b;
-}
-
-.wishlist-btn:hover {
-    background: #ff6b6b;
-    color: white;
 }
 
 .manga-description {
@@ -1019,6 +1272,7 @@
     background: white;
     padding: 0 1rem;
     color: #666;
+    font-size: 0.9rem;
 }
 
 .social-login {
@@ -1029,6 +1283,22 @@
 .social-btn {
     justify-content: center;
     gap: 0.5rem;
+    background: white;
+    border: 2px solid #e9ecef;
+    color: #333;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    border-radius: 6px;
+}
+
+.social-btn:hover {
+    border-color: #667eea;
+    background: #f8f9fa;
+    transform: translateY(-1px);
+    color: #333;
 }
 
 .auth-footer {
@@ -1078,6 +1348,93 @@
 .benefits-list i {
     font-size: 1.5rem;
     color: #ffd700;
+}
+
+/* Исправления для каталога */
+.catalog-header {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.catalog-filters {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.filter-group label {
+    font-weight: 500;
+    color: #2c3e50;
+    font-size: 0.9rem;
+}
+
+.filter-select {
+    padding: 0.5rem;
+    border: 2px solid #e9ecef;
+    border-radius: 6px;
+    background: white;
+    font-size: 0.9rem;
+    min-width: 150px;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.filter-results {
+    margin-bottom: 1.5rem;
+}
+
+.results-count {
+    background: #f8f9fa;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    color: #666;
+    font-weight: 500;
+    text-align: center;
+    border-left: 4px solid #667eea;
+}
+
+.empty-message {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    color: #ddd;
+}
+
+.empty-state h3 {
+    color: #2c3e50;
+    margin: 0;
+}
+
+.empty-state p {
+    color: #7f8c8d;
+    margin: 0;
 }
 
 /* Модальные окна */
@@ -1160,95 +1517,17 @@
     border-radius: 8px;
 }
 
-/* Навигация с поиском и корзиной */
-.main-nav {
-    display: flex;
-    align-items: center;
-    gap: 2rem;
-}
-
-.nav-list {
-    display: flex;
-    list-style: none;
-    gap: 1rem;
-    margin: 0;
-    padding: 0;
-}
-
-.cart-button {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.cart-counter {
-    position: absolute;
-    top: -8px;
-    right: -8px;
-    background: #ff6b6b;
-    color: white;
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    font-size: 0.7rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-}
-
-.nav-search {
-    margin-left: auto;
-}
-
-.search-container {
-    display: flex;
-    align-items: center;
-    background: rgba(255,255,255,0.1);
-    border-radius: 25px;
-    padding: 0.25rem;
-}
-
-.search-input {
-    background: none;
-    border: none;
-    color: white;
-    padding: 0.5rem 1rem;
-    width: 200px;
-    font-size: 0.9rem;
-}
-
-.search-input::placeholder {
-    color: rgba(255,255,255,0.7);
-}
-
-.search-input:focus {
-    outline: none;
-}
-
-.search-btn {
-    background: rgba(255,255,255,0.2);
-    border: none;
-    color: white;
-    padding: 0.5rem;
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.3s ease;
-}
-
-.search-btn:hover {
-    background: rgba(255,255,255,0.3);
-}
-
-/* Адаптивность для навигации */
+/* Адаптивность */
 @media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
     .main-nav {
         flex-direction: column;
         gap: 1rem;
+        width: 100%;
     }
 
     .nav-list {
@@ -1256,18 +1535,49 @@
         justify-content: center;
     }
 
+    .nav-search {
+        margin: 0;
+        width: 100%;
+    }
+
     .search-container {
         width: 100%;
         max-width: 300px;
+        margin: 0 auto;
     }
 
     .search-input {
         width: 100%;
     }
-}
 
-/* Дополнительные стили для адаптивности */
-@media (max-width: 768px) {
+    .header-actions {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .auth-container {
+        grid-template-columns: 1fr;
+    }
+
+    .manga-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    }
+
+    .catalog-filters {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .filter-group {
+        flex-direction: row;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .filter-select {
+        min-width: 200px;
+    }
+
     .manga-detail-main {
         grid-template-columns: 1fr;
         gap: 2rem;
@@ -1279,10 +1589,6 @@
 
     .cart-content,
     .checkout-content {
-        grid-template-columns: 1fr;
-    }
-
-    .auth-container {
         grid-template-columns: 1fr;
     }
 
