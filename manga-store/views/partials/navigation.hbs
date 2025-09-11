@@ -13,6 +13,25 @@
       <li class="nav-item">
         <a href="/orders" class="nav-link">Мои заказы</a>
       </li>
+      <li class="nav-item">
+        <a href="/profile" class="nav-link">Профиль</a>
+      </li>
     {{/if}}
+    <li class="nav-item">
+      <a href="/cart" class="nav-link cart-button">
+        <i class="fas fa-shopping-cart"></i>
+        <span class="cart-text">Корзина</span>
+        <span class="cart-counter" style="display: none;">0</span>
+      </a>
+    </li>
   </ul>
+
+  <div class="nav-search">
+    <div class="search-container">
+      <input type="text" class="search-input" placeholder="Поиск манги...">
+      <button type="button" class="search-btn">
+        <i class="fas fa-search"></i>
+      </button>
+    </div>
+  </div>
 </nav>

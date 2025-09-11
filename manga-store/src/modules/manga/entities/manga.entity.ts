@@ -1,5 +1,24 @@
-import { Manga as PrismaManga } from '@prisma/client';
+import { Manga as PrismaManga, MangaAuthor, MangaGenre, Publisher, OrderItem, Review, Author, Genre } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
+
+// Тип для Manga с включенными связями
+export type MangaWithRelations = PrismaManga & {
+  publisher?: Publisher;
+  mangaAuthors?: (MangaAuthor & {
+    author: Author;
+  })[];
+  mangaGenres?: (MangaGenre & {
+    genre: Genre;
+  })[];
+  orderItems?: OrderItem[];
+  reviews?: (Review & {
+    user?: {
+      id: number;
+      firstName: string;
+      lastName: string;
+    };
+  })[];
+};
 
 export class Manga implements PrismaManga {
   id: number;
@@ -19,7 +38,24 @@ export class Manga implements PrismaManga {
   createdAt: Date;
   updatedAt: Date;
 
-  constructor(partial: Partial<Manga>) {
+  // Дополнительные поля для связей (будут заполнены через Prisma include)
+  publisher?: Publisher;
+  mangaAuthors?: (MangaAuthor & {
+    author: Author;
+  })[];
+  mangaGenres?: (MangaGenre & {
+    genre: Genre;
+  })[];
+  orderItems?: OrderItem[];
+  reviews?: (Review & {
+    user?: {
+      id: number;
+      firstName: string;
+      lastName: string;
+    };
+  })[];
+
+  constructor(partial: Partial<MangaWithRelations>) {
     Object.assign(this, partial);
   }
 
@@ -43,6 +79,40 @@ export class Manga implements PrismaManga {
 
     const discount = this.price.sub(this.discountPrice!);
     return discount.div(this.price).mul(100).toNumber();
+  }
+
+  // Получить основного автора
+  get primaryAuthor(): string {
+    if (!this.mangaAuthors || this.mangaAuthors.length === 0) {
+      return 'Неизвестен';
+    }
+
+    const author = this.mangaAuthors[0].author;
+    return author.pseudonym || `${author.firstName} ${author.lastName}`;
+  }
+
+  // Получить список жанров
+  get genresList(): string[] {
+    if (!this.mangaGenres) return [];
+    return this.mangaGenres.map(mg => mg.genre.name);
+  }
+
+  // Получить строку жанров
+  get genresString(): string {
+    return this.genresList.join(', ') || '';
+  }
+
+  // Получить средний рейтинг
+  get averageRating(): number {
+    if (!this.reviews || this.reviews.length === 0) return 0;
+
+    const totalRating = this.reviews.reduce((sum, review) => sum + review.rating, 0);
+    return Math.round((totalRating / this.reviews.length) * 10) / 10;
+  }
+
+  // Получить количество отзывов
+  get reviewsCount(): number {
+    return this.reviews?.length || 0;
   }
 
   canReserve(quantity: number): boolean {

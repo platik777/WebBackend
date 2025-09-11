@@ -1,4 +1,18 @@
-import { Review as PrismaReview } from '@prisma/client';
+import { Review as PrismaReview, User, Manga } from '@prisma/client';
+
+// Тип для Review с включенными связями
+export type ReviewWithRelations = PrismaReview & {
+  user?: {
+    id: number;
+    firstName: string;
+    lastName: string;
+  };
+  manga?: {
+    id: number;
+    title: string;
+    imageUrl: string | null;
+  };
+};
 
 export class Review implements PrismaReview {
   id: number;
@@ -9,7 +23,19 @@ export class Review implements PrismaReview {
   createdAt: Date;
   updatedAt: Date;
 
-  constructor(partial: Partial<Review>) {
+  // Дополнительные поля для связей (будут заполнены через Prisma include)
+  user?: {
+    id: number;
+    firstName: string;
+    lastName: string;
+  } | null;
+  manga?: {
+    id: number;
+    title: string;
+    imageUrl: string | null;
+  } | null;
+
+  constructor(partial: Partial<ReviewWithRelations>) {
     Object.assign(this, partial);
   }
 
@@ -47,6 +73,17 @@ export class Review implements PrismaReview {
 
   get isDetailed(): boolean {
     return this.hasComment && this.commentLength >= 50;
+  }
+
+  // Получить имя автора отзыва
+  get authorName(): string {
+    if (!this.user) return 'Аноним';
+    return `${this.user.firstName} ${this.user.lastName}`;
+  }
+
+  // Получить название манги
+  get mangaTitle(): string {
+    return this.manga?.title || 'Неизвестная манга';
   }
 
   updateRating(newRating: number): void {
@@ -129,5 +166,38 @@ export class Review implements PrismaReview {
       month: 'long',
       day: 'numeric',
     });
+  }
+
+  // Получить относительную дату (например, "2 дня назад")
+  getRelativeDate(): string {
+    const now = new Date();
+    const diffInMs = now.getTime() - this.createdAt.getTime();
+    const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+
+    if (diffInDays === 0) {
+      return 'Сегодня';
+    } else if (diffInDays === 1) {
+      return 'Вчера';
+    } else if (diffInDays < 7) {
+      return `${diffInDays} дней назад`;
+    } else if (diffInDays < 30) {
+      const weeks = Math.floor(diffInDays / 7);
+      return `${weeks} ${weeks === 1 ? 'неделю' : 'недель'} назад`;
+    } else {
+      return this.getFormattedDate();
+    }
+  }
+
+  // Генерация звезд для отображения
+  getStarsHtml(): string {
+    let stars = '';
+    for (let i = 1; i <= 5; i++) {
+      if (i <= this.rating) {
+        stars += '<span class="star filled">★</span>';
+      } else {
+        stars += '<span class="star">★</span>';
+      }
+    }
+    return stars;
   }
 }

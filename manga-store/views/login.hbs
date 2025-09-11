@@ -1,0 +1,280 @@
+<div class="auth-page">
+  <div class="auth-container">
+    <div class="auth-card">
+      <div class="auth-header">
+        <h1>Вход в систему</h1>
+        <p>Войдите в свой аккаунт Manga Store</p>
+      </div>
+
+      <form class="auth-form" id="loginForm">
+        <div class="form-group">
+          <label for="email">Email:</label>
+          <input type="email" id="email" name="email" required placeholder="your@email.com">
+          <span class="error-message" id="emailError"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Пароль:</label>
+          <div class="password-input">
+            <input type="password" id="password" name="password" required placeholder="Введите пароль">
+            <button type="button" class="password-toggle" onclick="togglePassword()">
+              <i class="fas fa-eye" id="passwordIcon"></i>
+            </button>
+          </div>
+          <span class="error-message" id="passwordError"></span>
+        </div>
+
+        <div class="form-options">
+          <label class="checkbox-label">
+            <input type="checkbox" name="remember" id="remember">
+            Запомнить меня
+          </label>
+          <a href="/forgot-password" class="forgot-link">Забыли пароль?</a>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-large auth-submit">
+          <span class="btn-text">Войти</span>
+          <div class="btn-spinner" style="display: none;">
+            <i class="fas fa-spinner fa-spin"></i>
+          </div>
+        </button>
+
+        <div class="form-divider">
+          <span>или</span>
+        </div>
+
+        <div class="social-login">
+          <button type="button" class="btn btn-outline social-btn">
+            <i class="fab fa-google"></i>
+            Войти через Google
+          </button>
+          <button type="button" class="btn btn-outline social-btn">
+            <i class="fab fa-vk"></i>
+            Войти через VK
+          </button>
+        </div>
+      </form>
+
+      <div class="auth-footer">
+        <p>Нет аккаунта? <a href="/register">Зарегистрироваться</a></p>
+      </div>
+    </div>
+
+    <div class="auth-benefits">
+      <h3>Преимущества регистрации</h3>
+      <ul class="benefits-list">
+        <li>
+          <i class="fas fa-shopping-cart"></i>
+          <span>Быстрое оформление заказов</span>
+        </li>
+        <li>
+          <i class="fas fa-history"></i>
+          <span>История покупок</span>
+        </li>
+        <li>
+          <i class="fas fa-heart"></i>
+          <span>Список избранного</span>
+        </li>
+        <li>
+          <i class="fas fa-star"></i>
+          <span>Отзывы и рейтинги</span>
+        </li>
+        <li>
+          <i class="fas fa-gift"></i>
+          <span>Эксклюзивные предложения</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    initializeLoginForm();
+  });
+
+  function initializeLoginForm() {
+    const form = document.getElementById('loginForm');
+
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      await handleLogin();
+    });
+
+    // Валидация в реальном времени
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+
+    emailInput.addEventListener('blur', validateEmail);
+    passwordInput.addEventListener('blur', validatePassword);
+
+    // Очистка ошибок при вводе
+    emailInput.addEventListener('input', () => clearError('emailError'));
+    passwordInput.addEventListener('input', () => clearError('passwordError'));
+  }
+
+  function validateEmail() {
+    const email = document.getElementById('email').value;
+    const emailError = document.getElementById('emailError');
+
+    if (!email) {
+      showError('emailError', 'Email обязателен');
+      return false;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      showError('emailError', 'Введите корректный email');
+      return false;
+    }
+
+    clearError('emailError');
+    return true;
+  }
+
+  function validatePassword() {
+    const password = document.getElementById('password').value;
+    const passwordError = document.getElementById('passwordError');
+
+    if (!password) {
+      showError('passwordError', 'Пароль обязателен');
+      return false;
+    }
+
+    if (password.length < 6) {
+      showError('passwordError', 'Пароль должен содержать минимум 6 символов');
+      return false;
+    }
+
+    clearError('passwordError');
+    return true;
+  }
+
+  function showError(elementId, message) {
+    const errorElement = document.getElementById(elementId);
+    errorElement.textContent = message;
+    errorElement.style.display = 'block';
+  }
+
+  function clearError(elementId) {
+    const errorElement = document.getElementById(elementId);
+    errorElement.textContent = '';
+    errorElement.style.display = 'none';
+  }
+
+  function togglePassword() {
+    const passwordInput = document.getElementById('password');
+    const passwordIcon = document.getElementById('passwordIcon');
+
+    if (passwordInput.type === 'password') {
+      passwordInput.type = 'text';
+      passwordIcon.className = 'fas fa-eye-slash';
+    } else {
+      passwordInput.type = 'password';
+      passwordIcon.className = 'fas fa-eye';
+    }
+  }
+
+  async function handleLogin() {
+    // Валидация формы
+    const isEmailValid = validateEmail();
+    const isPasswordValid = validatePassword();
+
+    if (!isEmailValid || !isPasswordValid) {
+      return;
+    }
+
+    const formData = new FormData(document.getElementById('loginForm'));
+    const loginData = {
+      email: formData.get('email'),
+      password: formData.get('password'),
+      remember: formData.get('remember') === 'on'
+    };
+
+    // Показать спиннер
+    showLoading(true);
+
+    try {
+      // Здесь должен быть реальный API запрос
+      // const response = await fetch('/api/auth/login', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(loginData)
+      // });
+
+      // Симуляция входа
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // Симуляция успешного входа для тестовых аккаунтов
+      const testUsers = [
+        'admin@manga-store.ru',
+        'user1@example.com',
+        'user2@example.com'
+      ];
+
+      if (testUsers.includes(loginData.email)) {
+        // Сохранить данные пользователя (в реальном приложении это будет JWT token)
+        if (loginData.remember) {
+          localStorage.setItem('mangastore_user', JSON.stringify({
+            email: loginData.email,
+            name: 'Пользователь',
+            id: 1
+          }));
+        }
+
+        showNotification('Вход выполнен успешно!', 'success');
+
+        // Перенаправление на главную или предыдущую страницу
+        const returnUrl = new URLSearchParams(window.location.search).get('return') || '/';
+        setTimeout(() => {
+          window.location.href = returnUrl + '?auth=true';
+        }, 1000);
+
+      } else {
+        throw new Error('Неверный email или пароль');
+      }
+
+    } catch (error) {
+      showNotification(error.message || 'Ошибка входа в систему', 'error');
+    } finally {
+      showLoading(false);
+    }
+  }
+
+  function showLoading(show) {
+    const submitBtn = document.querySelector('.auth-submit');
+    const btnText = submitBtn.querySelector('.btn-text');
+    const btnSpinner = submitBtn.querySelector('.btn-spinner');
+
+    if (show) {
+      submitBtn.disabled = true;
+      btnText.style.display = 'none';
+      btnSpinner.style.display = 'inline-block';
+    } else {
+      submitBtn.disabled = false;
+      btnText.style.display = 'inline';
+      btnSpinner.style.display = 'none';
+    }
+  }
+
+  // Демо-данные для быстрого входа
+  function fillDemoCredentials() {
+    document.getElementById('email').value = 'user1@example.com';
+    document.getElementById('password').value = 'password123';
+  }
+
+  // Добавляем кнопку для демо-входа в режиме разработки
+  if (window.location.hostname === 'localhost') {
+    document.addEventListener('DOMContentLoaded', function() {
+      const demoBtn = document.createElement('button');
+      demoBtn.type = 'button';
+      demoBtn.className = 'btn btn-outline btn-small demo-btn';
+      demoBtn.textContent = 'Заполнить демо-данные';
+      demoBtn.onclick = fillDemoCredentials;
+      demoBtn.style.marginTop = '10px';
+
+      const authForm = document.querySelector('.auth-form');
+      authForm.appendChild(demoBtn);
+    });
+  }
+</script>

@@ -1,13 +1,34 @@
-import { Controller, Get, Render, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Render,
+  Query,
+  Param,
+  ParseIntPipe,
+  NotFoundException,
+} from '@nestjs/common';
 import { AppService } from './app.service';
+import { MangaService } from './modules/manga/manga.service';
+import { UsersService } from './modules/users/users.service';
+import { OrdersService } from './modules/orders/orders.service';
+import { ReviewsService } from './modules/reviews/reviews.service';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(
+    private readonly appService: AppService,
+    private readonly mangaService: MangaService,
+    private readonly usersService: UsersService,
+    private readonly ordersService: OrdersService,
+    private readonly reviewsService: ReviewsService,
+  ) {}
 
   @Get()
   @Render('index')
-  getHomePage(@Query('auth') isAuthenticated?: string) {
+  async getHomePage(@Query('auth') isAuthenticated?: string) {
+    // Получаем рекомендуемые манги из базы данных
+    const featuredMangas = await this.mangaService.findFeatured();
+
     return {
       title: 'Manga Store - Главная',
       user:
@@ -18,43 +39,39 @@ export class AppController {
               isAuthenticated: true,
             }
           : null,
-      featuredMangas: [
-        {
-          id: 1,
-          title: 'Attack on Titan',
-          author: 'Hajime Isayama',
-          price: 599,
-          image: '/images/aot.jpg',
-          description:
-            'Эпическая история о человечестве, борющемся за выживание против титанов.',
-          inStock: true,
-        },
-        {
-          id: 2,
-          title: 'One Piece',
-          author: 'Eiichiro Oda',
-          price: 699,
-          image: '/images/onepiece.jpg',
-          description:
-            'Приключения Монки Д. Луффи в поисках легендарного сокровища.',
-          inStock: true,
-        },
-        {
-          id: 3,
-          title: 'Demon Slayer',
-          author: 'Koyoharu Gotouge',
-          price: 549,
-          image: '/images/demonslayer.jpg',
-          description: 'История юноши, ставшего охотником на демонов.',
-          inStock: true,
-        },
-      ],
+      featuredMangas: featuredMangas.map((manga) => {
+        const mangaData = manga as any; // Временное решение для Prisma include данных
+        return {
+          id: manga.id,
+          title: manga.title,
+          author:
+            mangaData.mangaAuthors?.[0]?.author?.displayName ||
+            mangaData.mangaAuthors?.[0]?.author?.firstName +
+              ' ' +
+              mangaData.mangaAuthors?.[0]?.author?.lastName ||
+            'Неизвестен',
+          price: manga.price.toNumber(),
+          image: manga.imageUrl || '/images/placeholder.jpg',
+          description: manga.description || '',
+          inStock: manga.isAvailable,
+          genre:
+            mangaData.mangaGenres
+              ?.map((mg: any) => mg.genre?.name)
+              .join(', ') || '',
+        };
+      }),
     };
   }
 
   @Get('catalog')
   @Render('catalog')
-  getCatalogPage(@Query('auth') isAuthenticated?: string) {
+  async getCatalogPage(
+    @Query('auth') isAuthenticated?: string,
+    @Query() filters?: any,
+  ) {
+    // Получаем мангу с фильтрами из базы данных
+    const mangas = await this.mangaService.findAll(filters);
+
     return {
       title: 'Каталог манги',
       user:
@@ -65,44 +82,26 @@ export class AppController {
               isAuthenticated: true,
             }
           : null,
-      mangas: [
-        {
-          id: 1,
-          title: 'Attack on Titan',
-          author: 'Hajime Isayama',
-          price: 599,
-          image: '/images/aot.jpg',
-          genre: 'Экшен, Драма',
-          inStock: true,
-        },
-        {
-          id: 2,
-          title: 'One Piece',
-          author: 'Eiichiro Oda',
-          price: 699,
-          image: '/images/onepiece.jpg',
-          genre: 'Приключения, Комедия',
-          inStock: true,
-        },
-        {
-          id: 3,
-          title: 'Demon Slayer',
-          author: 'Koyoharu Gotouge',
-          price: 549,
-          image: '/images/demonslayer.jpg',
-          genre: 'Экшен, Сверхъестественное',
-          inStock: false,
-        },
-        {
-          id: 4,
-          title: 'My Hero Academia',
-          author: 'Kohei Horikoshi',
-          price: 579,
-          image: '/images/mha.jpg',
-          genre: 'Супергерои, Школа',
-          inStock: true,
-        },
-      ],
+      mangas: mangas.map((manga) => {
+        const mangaData = manga as any; // Временное решение для Prisma include данных
+        return {
+          id: manga.id,
+          title: manga.title,
+          author:
+            mangaData.mangaAuthors?.[0]?.author?.displayName ||
+            mangaData.mangaAuthors?.[0]?.author?.firstName +
+              ' ' +
+              mangaData.mangaAuthors?.[0]?.author?.lastName ||
+            'Неизвестен',
+          price: manga.price.toNumber(),
+          image: manga.imageUrl || '/images/placeholder.jpg',
+          genre:
+            mangaData.mangaGenres
+              ?.map((mg: any) => mg.genre?.name)
+              .join(', ') || '',
+          inStock: manga.isAvailable,
+        };
+      }),
     };
   }
 
@@ -119,6 +118,196 @@ export class AppController {
               isAuthenticated: true,
             }
           : null,
+    };
+  }
+
+  @Get('manga/:id')
+  @Render('manga-detail')
+  async getMangaDetailPage(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('auth') isAuthenticated?: string,
+  ) {
+    const manga = await this.mangaService.findOne(id);
+    if (!manga) {
+      throw new NotFoundException('Манга не найдена');
+    }
+
+    const reviews = await this.reviewsService.findByMangaId(id);
+    const mangaData = manga as any; // Временное решение для Prisma include данных
+
+    return {
+      title: `${manga.title} - Manga Store`,
+      user:
+        isAuthenticated === 'true'
+          ? {
+              name: 'Пользователь',
+              email: 'user@example.com',
+              isAuthenticated: true,
+            }
+          : null,
+      manga: {
+        id: manga.id,
+        title: manga.title,
+        description: manga.description,
+        author:
+          mangaData.mangaAuthors?.[0]?.author?.displayName ||
+          mangaData.mangaAuthors?.[0]?.author?.firstName +
+            ' ' +
+            mangaData.mangaAuthors?.[0]?.author?.lastName ||
+          'Неизвестен',
+        price: manga.price.toNumber(),
+        discountPrice: manga.discountPrice?.toNumber() || null,
+        image: manga.imageUrl || '/images/placeholder.jpg',
+        genre:
+          mangaData.mangaGenres?.map((mg: any) => mg.genre?.name).join(', ') ||
+          '',
+        inStock: manga.isAvailable,
+        stock: manga.stock,
+        pages: manga.pages,
+        language: manga.language,
+        publisher: mangaData.publisher?.name || 'Неизвестно',
+        publishDate: manga.publishDate?.toLocaleDateString('ru-RU') || null,
+      },
+      reviews: reviews.map((review) => {
+        const reviewData = review as any; // Временное решение для Prisma include данных
+        return {
+          id: review.id,
+          rating: review.rating,
+          comment: review.comment,
+          userName: reviewData.user
+            ? `${reviewData.user.firstName} ${reviewData.user.lastName}`
+            : 'Аноним',
+          date: review.getFormattedDate(),
+        };
+      }),
+    };
+  }
+
+  @Get('profile')
+  @Render('profile')
+  async getProfilePage(@Query('userId') userId?: string) {
+    if (!userId) {
+      return { title: 'Профиль', error: 'Необходимо войти в систему' };
+    }
+
+    const user = await this.usersService.findOne(parseInt(userId));
+    const userOrders = await this.ordersService.findByUserId(parseInt(userId));
+    const userReviews = await this.reviewsService.findByUserId(
+      parseInt(userId),
+    );
+
+    return {
+      title: 'Профиль пользователя',
+      user: user
+        ? {
+            id: user.id,
+            name: user.fullName,
+            email: user.email,
+            phone: user.phone,
+            address: user.address,
+            city: user.city,
+          }
+        : null,
+      orders: userOrders.map((order) => {
+        const orderData = order as any; // Временное решение для Prisma include данных
+        return {
+          id: order.id,
+          orderNumber: order.orderNumber,
+          status: order.status,
+          totalAmount: order.totalAmount.toNumber(),
+          createdAt: order.createdAt.toLocaleDateString('ru-RU'),
+          itemsCount: orderData.orderItems?.length || 0,
+        };
+      }),
+      reviews: userReviews.map((review) => {
+        const reviewData = review as any; // Временное решение для Prisma include данных
+        return {
+          id: review.id,
+          rating: review.rating,
+          comment: review.comment,
+          mangaTitle: reviewData.manga?.title || 'Неизвестная манга',
+          date: review.getFormattedDate(),
+        };
+      }),
+    };
+  }
+
+  @Get('orders')
+  @Render('orders')
+  async getOrdersPage(@Query('userId') userId?: string) {
+    if (!userId) {
+      return { title: 'Мои заказы', error: 'Необходимо войти в систему' };
+    }
+
+    const orders = await this.ordersService.findByUserId(parseInt(userId));
+
+    return {
+      title: 'Мои заказы',
+      orders: orders.map((order) => {
+        const orderData = order as any; // Временное решение для Prisma include данных
+        return {
+          id: order.id,
+          orderNumber: order.orderNumber,
+          status: order.status,
+          totalAmount: order.totalAmount.toNumber(),
+          createdAt: order.createdAt.toLocaleDateString('ru-RU'),
+          shippingAddress: `${order.shippingCity}, ${order.shippingAddress}`,
+          items:
+            orderData.orderItems?.map((item: any) => ({
+              title: item.manga?.title || 'Неизвестная манга',
+              quantity: item.quantity,
+              price: item.price.toNumber(),
+            })) || [],
+        };
+      }),
+    };
+  }
+
+  @Get('cart')
+  @Render('cart')
+  getCartPage(@Query('auth') isAuthenticated?: string) {
+    return {
+      title: 'Корзина',
+      user:
+        isAuthenticated === 'true'
+          ? {
+              name: 'Пользователь',
+              email: 'user@example.com',
+              isAuthenticated: true,
+            }
+          : null,
+    };
+  }
+
+  @Get('checkout')
+  @Render('checkout')
+  getCheckoutPage(@Query('auth') isAuthenticated?: string) {
+    return {
+      title: 'Оформление заказа',
+      user:
+        isAuthenticated === 'true'
+          ? {
+              name: 'Пользователь',
+              email: 'user@example.com',
+              isAuthenticated: true,
+            }
+          : null,
+    };
+  }
+
+  @Get('login')
+  @Render('login')
+  getLoginPage() {
+    return {
+      title: 'Вход в систему',
+    };
+  }
+
+  @Get('register')
+  @Render('register')
+  getRegisterPage() {
+    return {
+      title: 'Регистрация',
     };
   }
 }

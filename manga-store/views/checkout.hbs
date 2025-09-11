@@ -1,0 +1,302 @@
+{{#if error}}
+  <div class="error-message">
+    <h2>{{error}}</h2>
+    <a href="/login" class="btn btn-primary">Войти в систему</a>
+  </div>
+{{else}}
+  <div class="orders-page">
+    <div class="orders-header">
+      <h1 class="page-title">Мои заказы</h1>
+      <div class="orders-filters">
+        <select class="filter-select" id="statusFilter">
+          <option value="">Все статусы</option>
+          <option value="PENDING">Ожидает обработки</option>
+          <option value="PROCESSING">В обработке</option>
+          <option value="SHIPPED">Отправлен</option>
+          <option value="DELIVERED">Доставлен</option>
+          <option value="CANCELLED">Отменен</option>
+        </select>
+        <select class="filter-select" id="periodFilter">
+          <option value="">Все время</option>
+          <option value="month">За месяц</option>
+          <option value="quarter">За 3 месяца</option>
+          <option value="year">За год</option>
+        </select>
+      </div>
+    </div>
+
+    {{#if orders.length}}
+      <div class="orders-list">
+        {{#each orders}}
+          <div class="order-card" data-status="{{status}}">
+            <div class="order-header">
+              <div class="order-info">
+                <div class="order-number">Заказ №{{orderNumber}}</div>
+                <div class="order-date">{{createdAt}}</div>
+              </div>
+              <div class="order-status">
+                <span class="status-badge status-{{status}}">
+                  {{#eq status "PENDING"}}Ожидает обработки{{/eq}}
+                  {{#eq status "PROCESSING"}}В обработке{{/eq}}
+                  {{#eq status "SHIPPED"}}Отправлен{{/eq}}
+                  {{#eq status "DELIVERED"}}Доставлен{{/eq}}
+                  {{#eq status "CANCELLED"}}Отменен{{/eq}}
+                </span>
+              </div>
+            </div>
+
+            <div class="order-content">
+              <div class="order-items">
+                <h4>Товары:</h4>
+                <div class="items-list">
+                  {{#each items}}
+                    <div class="order-item">
+                      <span class="item-title">{{title}}</span>
+                      <span class="item-quantity">× {{quantity}}</span>
+                      <span class="item-price">{{price}} ₽</span>
+                    </div>
+                  {{/each}}
+                </div>
+              </div>
+
+              <div class="order-shipping">
+                <h4>Доставка:</h4>
+                <p>{{shippingAddress}}</p>
+              </div>
+            </div>
+
+            <div class="order-footer">
+              <div class="order-total">
+                <strong>Итого: {{totalAmount}} ₽</strong>
+              </div>
+              <div class="order-actions">
+                <button class="btn btn-outline btn-small" onclick="viewOrderDetails({{id}})">
+                  Подробнее
+                </button>
+                {{#eq status "PENDING"}}
+                  <button class="btn btn-danger btn-small" onclick="cancelOrder({{id}})">
+                    Отменить
+                  </button>
+                {{/eq}}
+                {{#eq status "DELIVERED"}}
+                  <button class="btn btn-primary btn-small" onclick="reorderItems({{id}})">
+                    Повторить заказ
+                  </button>
+                {{/eq}}
+              </div>
+            </div>
+          </div>
+        {{/each}}
+      </div>
+
+      <!-- Пагинация -->
+      <div class="pagination">
+        <button class="btn btn-outline" disabled>← Предыдущая</button>
+        <span class="pagination-info">Страница 1 из 1</span>
+        <button class="btn btn-outline" disabled>Следующая →</button>
+      </div>
+    {{else}}
+      <div class="empty-orders">
+        <div class="empty-state">
+          <i class="fas fa-shopping-bag"></i>
+          <h3>У вас пока нет заказов</h3>
+          <p>Перейдите в каталог и выберите интересную мангу</p>
+          <a href="/catalog" class="btn btn-primary">Перейти в каталог</a>
+        </div>
+      </div>
+    {{/if}}
+  </div>
+
+  <!-- Модальное окно для детального просмотра заказа -->
+  <div class="modal" id="orderModal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalOrderTitle">Детали заказа</h3>
+        <button class="modal-close" onclick="closeOrderModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="modalOrderContent">
+        <!-- Содержимое будет загружено через JavaScript -->
+      </div>
+    </div>
+  </div>
+{{/if}}
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    initializeFilters();
+  });
+
+  function initializeFilters() {
+    const statusFilter = document.getElementById('statusFilter');
+    const periodFilter = document.getElementById('periodFilter');
+
+    if (statusFilter) {
+      statusFilter.addEventListener('change', applyFilters);
+    }
+
+    if (periodFilter) {
+      periodFilter.addEventListener('change', applyFilters);
+    }
+  }
+
+  function applyFilters() {
+    const statusFilter = document.getElementById('statusFilter').value;
+    const periodFilter = document.getElementById('periodFilter').value;
+    const orderCards = document.querySelectorAll('.order-card');
+
+    orderCards.forEach(card => {
+      let shouldShow = true;
+
+      // Фильтр по статусу
+      if (statusFilter && card.dataset.status !== statusFilter) {
+        shouldShow = false;
+      }
+
+      // Фильтр по периоду (здесь нужна дополнительная логика)
+      if (periodFilter) {
+        // Реализация фильтрации по периоду
+        // Требует дополнительных данных в HTML или API запрос
+      }
+
+      card.style.display = shouldShow ? 'block' : 'none';
+    });
+  }
+
+  async function viewOrderDetails(orderId) {
+    try {
+      // Здесь должен быть API запрос
+      // const response = await fetch(`/api/orders/${orderId}`);
+      // const order = await response.json();
+
+      // Моковые данные
+      const mockOrder = {
+        id: orderId,
+        orderNumber: `ORDER-${Date.now()}-${orderId.toString().padStart(3, '0')}`,
+        status: 'DELIVERED',
+        totalAmount: 1198,
+        createdAt: '15 января 2025',
+        shippingAddress: 'Москва, ул. Пушкина, д. 10, кв. 5',
+        paymentMethod: 'Банковская карта',
+        items: [
+          { title: 'Attack on Titan', quantity: 1, price: 599 },
+          { title: 'One Piece', quantity: 1, price: 699 }
+        ],
+        trackingNumber: 'RF123456789RU'
+      };
+
+      showOrderModal(mockOrder);
+    } catch (error) {
+      showNotification('Ошибка загрузки данных заказа', 'error');
+    }
+  }
+
+  function showOrderModal(order) {
+    const modal = document.getElementById('orderModal');
+    const title = document.getElementById('modalOrderTitle');
+    const content = document.getElementById('modalOrderContent');
+
+    title.textContent = `Заказ №${order.orderNumber}`;
+
+    content.innerHTML = `
+    <div class="order-detail-section">
+      <h4>Информация о заказе</h4>
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="label">Статус:</span>
+          <span class="value status-badge status-${order.status}">${getStatusText(order.status)}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Дата заказа:</span>
+          <span class="value">${order.createdAt}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Сумма:</span>
+          <span class="value">${order.totalAmount} ₽</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Способ оплаты:</span>
+          <span class="value">${order.paymentMethod}</span>
+        </div>
+        ${order.trackingNumber ? `
+          <div class="detail-item">
+            <span class="label">Трек-номер:</span>
+            <span class="value">${order.trackingNumber}</span>
+          </div>
+        ` : ''}
+      </div>
+    </div>
+
+    <div class="order-detail-section">
+      <h4>Доставка</h4>
+      <p>${order.shippingAddress}</p>
+    </div>
+
+    <div class="order-detail-section">
+      <h4>Товары</h4>
+      <div class="modal-items-list">
+        ${order.items.map(item => `
+          <div class="modal-order-item">
+            <span class="item-title">${item.title}</span>
+            <span class="item-details">× ${item.quantity} = ${item.price * item.quantity} ₽</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+
+    modal.style.display = 'flex';
+  }
+
+  function closeOrderModal() {
+    document.getElementById('orderModal').style.display = 'none';
+  }
+
+  async function cancelOrder(orderId) {
+    if (!confirm('Вы уверены, что хотите отменить заказ?')) {
+      return;
+    }
+
+    try {
+      // Здесь должен быть API запрос
+      // await fetch(`/api/orders/${orderId}/status`, {
+      //   method: 'PATCH',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({ status: 'CANCELLED' })
+      // });
+
+      showNotification('Заказ отменен', 'success');
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (error) {
+      showNotification('Ошибка при отмене заказа', 'error');
+    }
+  }
+
+  async function reorderItems(orderId) {
+    try {
+      // Здесь должна быть логика добавления товаров из заказа в корзину
+      showNotification('Товары добавлены в корзину', 'success');
+      setTimeout(() => window.location.href = '/cart', 1000);
+    } catch (error) {
+      showNotification('Ошибка при повторном заказе', 'error');
+    }
+  }
+
+  function getStatusText(status) {
+    const statusTexts = {
+      'PENDING': 'Ожидает обработки',
+      'PROCESSING': 'В обработке',
+      'SHIPPED': 'Отправлен',
+      'DELIVERED': 'Доставлен',
+      'CANCELLED': 'Отменен'
+    };
+    return statusTexts[status] || status;
+  }
+
+  // Закрытие модального окна при клике вне его
+  window.onclick = function(event) {
+    const modal = document.getElementById('orderModal');
+    if (event.target === modal) {
+      closeOrderModal();
+    }
+  }
+</script>

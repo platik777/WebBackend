@@ -1,0 +1,182 @@
+<div class="cart-page">
+  <h1 class="page-title">Корзина</h1>
+
+  <div class="cart-content">
+    <div class="cart-items" id="cartItems">
+      <!-- Товары будут загружены через JavaScript -->
+    </div>
+
+    <div class="cart-summary">
+      <div class="summary-card">
+        <h3>Итого</h3>
+        <div class="summary-line">
+          <span>Товары:</span>
+          <span id="itemsTotal">0 ₽</span>
+        </div>
+        <div class="summary-line">
+          <span>Доставка:</span>
+          <span id="shippingCost">Бесплатно</span>
+        </div>
+        <div class="summary-line total">
+          <span>К оплате:</span>
+          <span id="totalAmount">0 ₽</span>
+        </div>
+
+        <button class="btn btn-primary btn-large checkout-btn" id="checkoutBtn" disabled>
+          Перейти к оформлению
+        </button>
+
+        <div class="payment-methods">
+          <h4>Принимаем к оплате:</h4>
+          <div class="payment-icons">
+            <i class="fab fa-cc-visa"></i>
+            <i class="fab fa-cc-mastercard"></i>
+            <i class="fab fa-cc-paypal"></i>
+            <i class="fas fa-money-bill-wave"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="empty-cart" id="emptyCart" style="display: none;">
+    <div class="empty-state">
+      <i class="fas fa-shopping-cart"></i>
+      <h3>Ваша корзина пуста</h3>
+      <p>Добавьте товары из каталога, чтобы оформить заказ</p>
+      <a href="/catalog" class="btn btn-primary">Перейти в каталог</a>
+    </div>
+  </div>
+
+  <div class="recommended-section">
+    <h2>Рекомендуем также</h2>
+    <div class="recommended-grid" id="recommendedItems">
+      <!-- Рекомендуемые товары будут загружены через JavaScript -->
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    loadCartItems();
+    updateCartSummary();
+  });
+
+  function loadCartItems() {
+    const cart = JSON.parse(localStorage.getItem('manga-cart') || '[]');
+    const cartItemsContainer = document.getElementById('cartItems');
+    const emptyCart = document.getElementById('emptyCart');
+
+    if (cart.length === 0) {
+      cartItemsContainer.style.display = 'none';
+      emptyCart.style.display = 'block';
+      return;
+    }
+
+    cartItemsContainer.style.display = 'block';
+    emptyCart.style.display = 'none';
+
+    // Здесь нужно загрузить данные о товарах из API
+    // Пока используем моковые данные
+    const mockItems = [
+      {
+        id: 1,
+        title: 'Attack on Titan',
+        author: 'Hajime Isayama',
+        price: 599,
+        image: '/images/aot.jpg',
+        inStock: true
+      },
+      {
+        id: 2,
+        title: 'One Piece',
+        author: 'Eiichiro Oda',
+        price: 699,
+        image: '/images/onepiece.jpg',
+        inStock: true
+      }
+    ];
+
+    cartItemsContainer.innerHTML = cart.map(cartItem => {
+      const item = mockItems.find(i => i.id == cartItem.id);
+      if (!item) return '';
+
+      return `
+      <div class="cart-item" data-id="${item.id}">
+        <div class="item-image">
+          <img src="${item.image}" alt="${item.title}">
+        </div>
+        <div class="item-info">
+          <h3>${item.title}</h3>
+          <p>${item.author}</p>
+          <div class="item-availability">
+            ${item.inStock ? '<span class="in-stock">В наличии</span>' : '<span class="out-of-stock">Нет в наличии</span>'}
+          </div>
+        </div>
+        <div class="item-quantity">
+          <button class="quantity-btn minus" onclick="changeQuantity(${item.id}, -1)">-</button>
+          <span class="quantity">${cartItem.quantity}</span>
+          <button class="quantity-btn plus" onclick="changeQuantity(${item.id}, 1)">+</button>
+        </div>
+        <div class="item-price">
+          <span class="price">${item.price * cartItem.quantity} ₽</span>
+          <span class="unit-price">${item.price} ₽ за шт.</span>
+        </div>
+        <div class="item-actions">
+          <button class="remove-btn" onclick="removeFromCart(${item.id})">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </div>
+    `;
+    }).join('');
+  }
+
+  function changeQuantity(id, change) {
+    let cart = JSON.parse(localStorage.getItem('manga-cart') || '[]');
+    const item = cart.find(item => item.id === id);
+
+    if (item) {
+      item.quantity += change;
+      if (item.quantity <= 0) {
+        cart = cart.filter(item => item.id !== id);
+      }
+    }
+
+    localStorage.setItem('manga-cart', JSON.stringify(cart));
+    loadCartItems();
+    updateCartSummary();
+    updateCartCounter();
+  }
+
+  function removeFromCart(id) {
+    let cart = JSON.parse(localStorage.getItem('manga-cart') || '[]');
+    cart = cart.filter(item => item.id !== id);
+    localStorage.setItem('manga-cart', JSON.stringify(cart));
+    loadCartItems();
+    updateCartSummary();
+    updateCartCounter();
+    showNotification('Товар удален из корзины', 'info');
+  }
+
+  function updateCartSummary() {
+    const cart = JSON.parse(localStorage.getItem('manga-cart') || '[]');
+    const mockPrices = { 1: 599, 2: 699, 3: 549, 4: 579 };
+
+    let total = 0;
+    cart.forEach(item => {
+      total += (mockPrices[item.id] || 0) * item.quantity;
+    });
+
+    document.getElementById('itemsTotal').textContent = total + ' ₽';
+    document.getElementById('totalAmount').textContent = total + ' ₽';
+
+    const checkoutBtn = document.getElementById('checkoutBtn');
+    if (cart.length > 0) {
+      checkoutBtn.disabled = false;
+      checkoutBtn.onclick = () => window.location.href = '/checkout';
+    } else {
+      checkoutBtn.disabled = true;
+    }
+  }
+</script>

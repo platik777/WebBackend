@@ -2,8 +2,24 @@ import {
   Order as PrismaOrder,
   OrderStatus,
   PaymentStatus,
+  OrderItem,
+  User,
+  Manga,
 } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
+
+// Тип для Order с включенными связями
+export type OrderWithRelations = PrismaOrder & {
+  orderItems?: (OrderItem & {
+    manga: Manga;
+  })[];
+  user?: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+};
 
 export class Order implements PrismaOrder {
   id: number;
@@ -20,7 +36,18 @@ export class Order implements PrismaOrder {
   updatedAt: Date;
   shippedAt: Date | null;
 
-  constructor(partial: Partial<Order>) {
+  // Дополнительные поля для связей (будут заполнены через Prisma include)
+  orderItems?: (OrderItem & {
+    manga: Manga;
+  })[];
+  user?: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+
+  constructor(partial: Partial<OrderWithRelations>) {
     Object.assign(this, partial);
   }
 
@@ -48,6 +75,23 @@ export class Order implements PrismaOrder {
 
   get isPaid(): boolean {
     return this.paymentStatus === PaymentStatus.PAID;
+  }
+
+  // Получить общее количество товаров в заказе
+  get totalItems(): number {
+    if (!this.orderItems) return 0;
+    return this.orderItems.reduce((total, item) => total + item.quantity, 0);
+  }
+
+  // Получить список товаров с деталями
+  get itemsSummary(): string {
+    if (!this.orderItems || this.orderItems.length === 0) {
+      return 'Нет товаров';
+    }
+
+    return this.orderItems
+      .map((item) => `${item.manga.title} x${item.quantity}`)
+      .join(', ');
   }
 
   // Методы для изменения статуса заказа
@@ -124,5 +168,28 @@ export class Order implements PrismaOrder {
     };
 
     return cityDeliveryDays[this.shippingCity] || 7; // По умолчанию 7 дней
+  }
+
+  // Получить отформатированную дату создания
+  getFormattedCreatedDate(): string {
+    return this.createdAt.toLocaleDateString('ru-RU', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  }
+
+  // Получить статус на русском языке
+  getStatusText(): string {
+    const statusTexts: Record<OrderStatus, string> = {
+      PENDING: 'Ожидает обработки',
+      PROCESSING: 'В обработке',
+      SHIPPED: 'Отправлен',
+      DELIVERED: 'Доставлен',
+      CANCELLED: 'Отменен',
+    };
+    return statusTexts[this.status];
   }
 }

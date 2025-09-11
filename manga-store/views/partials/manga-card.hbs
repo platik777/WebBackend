@@ -2,18 +2,30 @@
      data-genre="{{genre}}"
      data-price="{{price}}"
      data-title="{{title}}"
+     data-author="{{author}}"
      data-stock="{{#if inStock}}1{{else}}0{{/if}}">
-  <div class="manga-image">
-    <img src="{{image}}" alt="{{title}}" loading="lazy" />
-    {{#unless inStock}}
-      <div class="stock-overlay">
-        <span>Нет в наличии</span>
+
+  <!-- Ссылка на детальную страницу через изображение -->
+  <a href="/manga/{{id}}" class="manga-image-link">
+    <div class="manga-image">
+      <img src="{{image}}" alt="{{title}}" loading="lazy" />
+      {{#unless inStock}}
+        <div class="stock-overlay">
+          <span>Нет в наличии</span>
+        </div>
+      {{/unless}}
+      <!-- Overlay с кнопкой "Подробнее" при наведении -->
+      <div class="manga-overlay">
+        <span class="overlay-text">Подробнее</span>
       </div>
-    {{/unless}}
-  </div>
+    </div>
+  </a>
 
   <div class="manga-info">
-    <h3 class="manga-title">{{title}}</h3>
+    <!-- Ссылка на детальную страницу через заголовок -->
+    <h3 class="manga-title">
+      <a href="/manga/{{id}}" class="manga-title-link">{{title}}</a>
+    </h3>
     <p class="manga-author">{{author}}</p>
     {{#if genre}}
       <p class="manga-genre">{{genre}}</p>
@@ -21,16 +33,26 @@
 
     <div class="manga-footer">
       <div class="manga-price">{{price}} ₽</div>
-      {{#if inStock}}
-        <button class="btn btn-primary btn-small add-to-cart" data-manga-id="{{id}}">
-          <i class="fas fa-shopping-cart"></i>
-          В корзину
-        </button>
-      {{else}}
-        <button class="btn btn-disabled btn-small" disabled>
-          Нет в наличии
-        </button>
-      {{/if}}
+      <div class="manga-actions">
+        {{#if inStock}}
+          <button class="btn btn-primary btn-small add-to-cart" data-manga-id="{{id}}">
+            <i class="fas fa-shopping-cart"></i>
+            В корзину
+          </button>
+          <button class="btn btn-outline btn-small wishlist-btn" data-manga-id="{{id}}">
+            <i class="far fa-heart"></i>
+          </button>
+        {{else}}
+          <button class="btn btn-disabled btn-small" disabled>
+            Нет в наличии
+          </button>
+        {{/if}}
+        <!-- Дополнительная кнопка для перехода на детальную страницу -->
+        <a href="/manga/{{id}}" class="btn btn-outline btn-small manga-detail-btn">
+          <i class="fas fa-info-circle"></i>
+          Подробнее
+        </a>
+      </div>
     </div>
   </div>
 </div>

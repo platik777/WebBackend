@@ -1,0 +1,158 @@
+{{#if error}}
+  <div class="error-message">
+    <h2>{{error}}</h2>
+    <a href="/login" class="btn btn-primary">Войти в систему</a>
+  </div>
+{{else}}
+  <div class="profile-page">
+    <div class="profile-header">
+      <h1 class="page-title">Профиль пользователя</h1>
+    </div>
+
+    <div class="profile-content">
+      <div class="profile-sidebar">
+        <div class="user-info-card">
+          <div class="user-avatar">
+            <i class="fas fa-user-circle"></i>
+          </div>
+          <h2>{{user.name}}</h2>
+          <p>{{user.email}}</p>
+
+          <div class="profile-stats">
+            <div class="stat-item">
+              <div class="stat-number">{{orders.length}}</div>
+              <div class="stat-label">Заказов</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-number">{{reviews.length}}</div>
+              <div class="stat-label">Отзывов</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-navigation">
+          <ul>
+            <li><a href="#personal-info" class="nav-tab active" data-tab="personal-info">Личная информация</a></li>
+            <li><a href="#orders-history" class="nav-tab" data-tab="orders-history">История заказов</a></li>
+            <li><a href="#reviews-history" class="nav-tab" data-tab="reviews-history">Мои отзывы</a></li>
+            <li><a href="#settings" class="nav-tab" data-tab="settings">Настройки</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="profile-main">
+        <div class="tab-content active" id="personal-info">
+          <h3>Личная информация</h3>
+          <form class="profile-form">
+            <div class="form-group">
+              <label for="name">Имя:</label>
+              <input type="text" id="name" value="{{user.name}}" readonly>
+            </div>
+            <div class="form-group">
+              <label for="email">Email:</label>
+              <input type="email" id="email" value="{{user.email}}" readonly>
+            </div>
+            <div class="form-group">
+              <label for="phone">Телефон:</label>
+              <input type="tel" id="phone" value="{{user.phone}}" placeholder="Не указан">
+            </div>
+            <div class="form-group">
+              <label for="city">Город:</label>
+              <input type="text" id="city" value="{{user.city}}" placeholder="Не указан">
+            </div>
+            <div class="form-group">
+              <label for="address">Адрес:</label>
+              <textarea id="address" rows="3" placeholder="Не указан">{{user.address}}</textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+          </form>
+        </div>
+
+        <div class="tab-content" id="orders-history">
+          <h3>История заказов</h3>
+          {{#if orders.length}}
+            <div class="orders-list">
+              {{#each orders}}
+                <div class="order-card">
+                  <div class="order-header">
+                    <div class="order-number">Заказ №{{orderNumber}}</div>
+                    <div class="order-status status-{{status}}">{{status}}</div>
+                  </div>
+                  <div class="order-details">
+                    <p><strong>Дата:</strong> {{createdAt}}</p>
+                    <p><strong>Сумма:</strong> {{totalAmount}} ₽</p>
+                    <p><strong>Товаров:</strong> {{itemsCount}}</p>
+                  </div>
+                  <div class="order-actions">
+                    <a href="/orders/{{id}}" class="btn btn-outline btn-small">Подробнее</a>
+                  </div>
+                </div>
+              {{/each}}
+            </div>
+          {{else}}
+            <div class="empty-state">
+              <i class="fas fa-shopping-bag"></i>
+              <h4>У вас пока нет заказов</h4>
+              <p>Перейдите в каталог и выберите интересную мангу</p>
+              <a href="/catalog" class="btn btn-primary">Перейти в каталог</a>
+            </div>
+          {{/if}}
+        </div>
+
+        <div class="tab-content" id="reviews-history">
+          <h3>Мои отзывы</h3>
+          {{#if reviews.length}}
+            <div class="reviews-list">
+              {{#each reviews}}
+                <div class="review-card">
+                  <div class="review-manga">{{mangaTitle}}</div>
+                  <div class="review-rating">
+                    {{#each (range rating)}}
+                      <span class="star filled">★</span>
+                    {{/each}}
+                    {{#each (range (subtract 5 rating))}}
+                      <span class="star">★</span>
+                    {{/each}}
+                  </div>
+                  {{#if comment}}
+                    <div class="review-comment">{{comment}}</div>
+                  {{/if}}
+                  <div class="review-date">{{date}}</div>
+                </div>
+              {{/each}}
+            </div>
+          {{else}}
+            <div class="empty-state">
+              <i class="fas fa-star"></i>
+              <h4>Вы пока не оставили ни одного отзыва</h4>
+              <p>Оставляйте отзывы о прочитанной манге</p>
+            </div>
+          {{/if}}
+        </div>
+
+        <div class="tab-content" id="settings">
+          <h3>Настройки аккаунта</h3>
+          <div class="settings-section">
+            <h4>Безопасность</h4>
+            <button class="btn btn-outline">Изменить пароль</button>
+          </div>
+          <div class="settings-section">
+            <h4>Уведомления</h4>
+            <label class="checkbox-label">
+              <input type="checkbox" checked>
+              Уведомления о новых поступлениях
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" checked>
+              Уведомления о статусе заказа
+            </label>
+          </div>
+          <div class="settings-section">
+            <h4>Аккаунт</h4>
+            <button class="btn btn-danger">Удалить аккаунт</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{{/if}}

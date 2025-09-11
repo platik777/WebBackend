@@ -1,0 +1,302 @@
+<div class="checkout-page">
+  <h1 class="page-title">Оформление заказа</h1>
+
+  <div class="checkout-content">
+    <div class="checkout-form-section">
+      <form class="checkout-form" id="checkoutForm">
+        <div class="form-section">
+          <h3>1. Контактная информация</h3>
+          {{#if user}}
+            <div class="form-group">
+              <label for="email">Email:</label>
+              <input type="email" id="email" name="email" value="{{user.email}}" readonly>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="firstName">Имя:</label>
+                <input type="text" id="firstName" name="firstName" value="{{user.firstName}}" required>
+              </div>
+              <div class="form-group">
+                <label for="lastName">Фамилия:</label>
+                <input type="text" id="lastName" name="lastName" value="{{user.lastName}}" required>
+              </div>
+            </div>
+          {{else}}
+            <div class="form-group">
+              <label for="email">Email:</label>
+              <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="firstName">Имя:</label>
+                <input type="text" id="firstName" name="firstName" required>
+              </div>
+              <div class="form-group">
+                <label for="lastName">Фамилия:</label>
+                <input type="text" id="lastName" name="lastName" required>
+              </div>
+            </div>
+          {{/if}}
+          <div class="form-group">
+            <label for="phone">Телефон:</label>
+            <input type="tel" id="phone" name="phone" placeholder="+7 (___) ___-__-__" required>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>2. Адрес доставки</h3>
+          <div class="form-group">
+            <label for="city">Город:</label>
+            <input type="text" id="city" name="city" required>
+          </div>
+          <div class="form-group">
+            <label for="address">Адрес:</label>
+            <textarea id="address" name="address" rows="3" placeholder="Улица, дом, квартира" required></textarea>
+          </div>
+          <div class="form-group">
+            <label for="postalCode">Почтовый индекс:</label>
+            <input type="text" id="postalCode" name="postalCode" required>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>3. Способ доставки</h3>
+          <div class="delivery-options">
+            <label class="delivery-option">
+              <input type="radio" name="delivery" value="standard" checked>
+              <div class="option-content">
+                <div class="option-title">Стандартная доставка</div>
+                <div class="option-description">3-5 рабочих дней</div>
+                <div class="option-price">Бесплатно</div>
+              </div>
+            </label>
+            <label class="delivery-option">
+              <input type="radio" name="delivery" value="express">
+              <div class="option-content">
+                <div class="option-title">Экспресс доставка</div>
+                <div class="option-description">1-2 рабочих дня</div>
+                <div class="option-price">300 ₽</div>
+              </div>
+            </label>
+            <label class="delivery-option">
+              <input type="radio" name="delivery" value="pickup">
+              <div class="option-content">
+                <div class="option-title">Самовывоз</div>
+                <div class="option-description">Готов к выдаче через 2 часа</div>
+                <div class="option-price">Бесплатно</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>4. Способ оплаты</h3>
+          <div class="payment-options">
+            <label class="payment-option">
+              <input type="radio" name="payment" value="card" checked>
+              <div class="option-content">
+                <i class="fas fa-credit-card"></i>
+                <span>Банковская карта</span>
+              </div>
+            </label>
+            <label class="payment-option">
+              <input type="radio" name="payment" value="cash">
+              <div class="option-content">
+                <i class="fas fa-money-bill-wave"></i>
+                <span>Наличными при получении</span>
+              </div>
+            </label>
+            <label class="payment-option">
+              <input type="radio" name="payment" value="online">
+              <div class="option-content">
+                <i class="fas fa-mobile-alt"></i>
+                <span>Онлайн-платеж</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>5. Комментарий к заказу</h3>
+          <div class="form-group">
+            <textarea id="comment" name="comment" rows="3" placeholder="Дополнительная информация для курьера или пожелания по заказу"></textarea>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="order-summary-section">
+      <div class="order-summary">
+        <h3>Ваш заказ</h3>
+        <div class="order-items" id="orderItems">
+          <!-- Товары будут загружены через JavaScript -->
+        </div>
+
+        <div class="order-totals">
+          <div class="total-line">
+            <span>Товары:</span>
+            <span id="itemsTotal">0 ₽</span>
+          </div>
+          <div class="total-line">
+            <span>Доставка:</span>
+            <span id="deliveryTotal">Бесплатно</span>
+          </div>
+          <div class="total-line total">
+            <span>Итого:</span>
+            <span id="finalTotal">0 ₽</span>
+          </div>
+        </div>
+
+        <button type="submit" form="checkoutForm" class="btn btn-primary btn-large">
+          Оформить заказ
+        </button>
+
+        <div class="security-info">
+          <i class="fas fa-shield-alt"></i>
+          <span>Ваши данные защищены SSL-шифрованием</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    loadOrderItems();
+    updateOrderTotals();
+    initializeForm();
+  });
+
+  function loadOrderItems() {
+    const cart = JSON.parse(localStorage.getItem('manga-cart') || '[]');
+    const orderItemsContainer = document.getElementById('orderItems');
+
+    if (cart.length === 0) {
+      window.location.href = '/cart';
+      return;
+    }
+
+    // Моковые данные товаров
+    const mockItems = [
+      { id: 1, title: 'Attack on Titan', author: 'Hajime Isayama', price: 599, image: '/images/aot.jpg' },
+      { id: 2, title: 'One Piece', author: 'Eiichiro Oda', price: 699, image: '/images/onepiece.jpg' },
+      { id: 3, title: 'Demon Slayer', author: 'Koyoharu Gotouge', price: 549, image: '/images/demonslayer.jpg' },
+      { id: 4, title: 'My Hero Academia', author: 'Kohei Horikoshi', price: 579, image: '/images/mha.jpg' }
+    ];
+
+    orderItemsContainer.innerHTML = cart.map(cartItem => {
+      const item = mockItems.find(i => i.id == cartItem.id);
+      if (!item) return '';
+
+      return `
+      <div class="order-item">
+        <img src="${item.image}" alt="${item.title}" class="item-image">
+        <div class="item-details">
+          <div class="item-title">${item.title}</div>
+          <div class="item-author">${item.author}</div>
+          <div class="item-quantity">Количество: ${cartItem.quantity}</div>
+        </div>
+        <div class="item-price">${item.price * cartItem.quantity} ₽</div>
+      </div>
+    `;
+    }).join('');
+  }
+
+  function updateOrderTotals() {
+    const cart = JSON.parse(localStorage.getItem('manga-cart') || '[]');
+    const mockPrices = { 1: 599, 2: 699, 3: 549, 4: 579 };
+
+    let itemsTotal = 0;
+    cart.forEach(item => {
+      itemsTotal += (mockPrices[item.id] || 0) * item.quantity;
+    });
+
+    const deliveryMethod = document.querySelector('input[name="delivery"]:checked')?.value || 'standard';
+    let deliveryPrice = 0;
+    let deliveryText = 'Бесплатно';
+
+    if (deliveryMethod === 'express') {
+      deliveryPrice = 300;
+      deliveryText = '300 ₽';
+    }
+
+    const finalTotal = itemsTotal + deliveryPrice;
+
+    document.getElementById('itemsTotal').textContent = itemsTotal + ' ₽';
+    document.getElementById('deliveryTotal').textContent = deliveryText;
+    document.getElementById('finalTotal').textContent = finalTotal + ' ₽';
+  }
+
+  function initializeForm() {
+    // Обработчик изменения способа доставки
+    document.querySelectorAll('input[name="delivery"]').forEach(radio => {
+      radio.addEventListener('change', updateOrderTotals);
+    });
+
+    // Обработчик отправки формы
+    document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      processOrder();
+    });
+
+    // Маска для телефона
+    const phoneInput = document.getElementById('phone');
+    phoneInput.addEventListener('input', function(e) {
+      let value = e.target.value.replace(/\D/g, '');
+      if (value.length > 0) {
+        if (value[0] === '8') value = '7' + value.slice(1);
+        if (value[0] !== '7') value = '7' + value;
+      }
+
+      const formatted = value.replace(/(\d{1})(\d{3})(\d{3})(\d{2})(\d{2})/, '+$1 ($2) $3-$4-$5');
+      e.target.value = formatted;
+    });
+  }
+
+  async function processOrder() {
+    const formData = new FormData(document.getElementById('checkoutForm'));
+    const cart = JSON.parse(localStorage.getItem('manga-cart') || '[]');
+
+    if (cart.length === 0) {
+      showNotification('Корзина пуста', 'error');
+      return;
+    }
+
+    const orderData = {
+      userId: 1, // Здесь должен быть реальный ID пользователя
+      shippingAddress: formData.get('address'),
+      shippingCity: formData.get('city'),
+      shippingPhone: formData.get('phone'),
+      items: cart.map(item => ({
+        mangaId: item.id,
+        quantity: item.quantity,
+        price: getMockPrice(item.id)
+      }))
+    };
+
+    try {
+      // Здесь должен быть реальный API вызов
+      // const response = await fetch('/api/orders', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(orderData)
+      // });
+
+      // Симуляция успешного заказа
+      setTimeout(() => {
+        localStorage.removeItem('manga-cart');
+        updateCartCounter();
+        showNotification('Заказ успешно оформлен!', 'success');
+        window.location.href = '/orders';
+      }, 1000);
+
+    } catch (error) {
+      showNotification('Ошибка при оформлении заказа', 'error');
+    }
+  }
+
+  function getMockPrice(id) {
+    const prices = { 1: 599, 2: 699, 3: 549, 4: 579 };
+    return prices[id] || 0;
+  }
+</script>

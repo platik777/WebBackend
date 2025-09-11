@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
-import { Manga } from './entities/manga.entity';
+import { Manga, MangaWithRelations } from './entities/manga.entity';
 import { CreateMangaDto } from './dto/create-manga.dto';
 import { UpdateMangaDto } from './dto/update-manga.dto';
 import { Decimal } from '@prisma/client/runtime/library';
@@ -44,7 +44,7 @@ export class MangaService {
       },
     });
 
-    return new Manga(mangaData);
+    return new Manga(mangaData as MangaWithRelations);
   }
 
   async findAll(filters?: {
@@ -53,7 +53,7 @@ export class MangaService {
     priceMin?: number;
     priceMax?: number;
     inStock?: boolean;
-  }) {
+  }): Promise<Manga[]> {
     const where: any = {};
 
     if (filters) {
@@ -131,7 +131,7 @@ export class MangaService {
       },
     });
 
-    return mangas.map((manga) => new Manga(manga));
+    return mangas.map((manga) => new Manga(manga as MangaWithRelations));
   }
 
   async findOne(id: number): Promise<Manga | null> {
@@ -166,12 +166,16 @@ export class MangaService {
       },
     });
 
-    return manga ? new Manga(manga) : null;
+    return manga ? new Manga(manga as MangaWithRelations) : null;
   }
 
   async findFeatured(): Promise<Manga[]> {
     // Возвращаем последние 6 добавленных манг как "рекомендуемые"
     const mangas = await this.prisma.manga.findMany({
+      where: {
+        isActive: true,
+        stock: { gt: 0 },
+      },
       include: {
         publisher: true,
         mangaAuthors: {
@@ -191,7 +195,7 @@ export class MangaService {
       take: 6,
     });
 
-    return mangas.map((manga) => new Manga(manga));
+    return mangas.map((manga) => new Manga(manga as MangaWithRelations));
   }
 
   async update(id: number, updateMangaDto: UpdateMangaDto): Promise<Manga> {
@@ -225,7 +229,7 @@ export class MangaService {
       },
     });
 
-    return new Manga(manga);
+    return new Manga(manga as MangaWithRelations);
   }
 
   async remove(id: number): Promise<void> {
@@ -273,5 +277,88 @@ export class MangaService {
       inStock: inStockCount,
       averagePrice: avgPrice._avg.price,
     };
+  }
+
+  // Поиск манги по названию
+  async searchByTitle(query: string): Promise<Manga[]> {
+    const mangas = await this.prisma.manga.findMany({
+      where: {
+        title: {
+          contains: query,
+          mode: 'insensitive',
+        },
+        isActive: true,
+      },
+      include: {
+        publisher: true,
+        mangaAuthors: {
+          include: {
+            author: true,
+          },
+        },
+        mangaGenres: {
+          include: {
+            genre: true,
+          },
+        },
+      },
+      orderBy: {
+        title: 'asc',
+      },
+    });
+
+    return mangas.map((manga) => new Manga(manga as MangaWithRelations));
+  }
+
+  // Получить похожие манги по жанрам
+  async getSimilarManga(mangaId: number, limit: number = 4): Promise<Manga[]> {
+    const manga = await this.prisma.manga.findUnique({
+      where: { id: mangaId },
+      include: {
+        mangaGenres: {
+          include: {
+            genre: true,
+          },
+        },
+      },
+    });
+
+    if (!manga || !manga.mangaGenres.length) {
+      return [];
+    }
+
+    const genreIds = manga.mangaGenres.map((mg) => mg.genreId);
+
+    const similarMangas = await this.prisma.manga.findMany({
+      where: {
+        id: { not: mangaId },
+        isActive: true,
+        stock: { gt: 0 },
+        mangaGenres: {
+          some: {
+            genreId: { in: genreIds },
+          },
+        },
+      },
+      include: {
+        publisher: true,
+        mangaAuthors: {
+          include: {
+            author: true,
+          },
+        },
+        mangaGenres: {
+          include: {
+            genre: true,
+          },
+        },
+      },
+      take: limit,
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return similarMangas.map((manga) => new Manga(manga as MangaWithRelations));
   }
 }
