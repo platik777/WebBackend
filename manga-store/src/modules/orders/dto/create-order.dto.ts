@@ -1,29 +1,27 @@
-import {
-  IsInt,
-  IsArray,
-  ValidateNested,
-  IsNumber,
-  Min,
-  IsString,
-} from 'class-validator';
+import { IsString, IsNumber, IsArray, IsOptional, ArrayMinSize, ValidateNested, IsEmail } from 'class-validator';
 import { Type } from 'class-transformer';
 
-class OrderItemDto {
-  @IsInt()
+export class OrderItemDto {
+  @IsNumber()
   mangaId: number;
 
-  @IsInt()
-  @Min(1)
+  @IsNumber()
   quantity: number;
 
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
+  @IsNumber()
   price: number;
 }
 
 export class CreateOrderDto {
-  @IsInt()
-  userId: number;
+  @IsOptional()
+  @IsNumber()
+  userId?: number;
+
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => OrderItemDto)
+  items: OrderItemDto[];
 
   @IsString()
   shippingAddress: string;
@@ -34,8 +32,19 @@ export class CreateOrderDto {
   @IsString()
   shippingPhone: string;
 
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => OrderItemDto)
-  items: OrderItemDto[];
+  @IsOptional()
+  @IsString()
+  paymentMethod?: string;
+
+  @IsOptional()
+  @IsEmail()
+  customerEmail?: string;
+
+  @IsOptional()
+  @IsString()
+  customerFirstName?: string;
+
+  @IsOptional()
+  @IsString()
+  customerLastName?: string;
 }

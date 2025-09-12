@@ -1,9 +1,14 @@
+<!-- Обновленная страница корзины views/cart.hbs -->
 <div class="cart-page">
   <h1 class="page-title">Корзина</h1>
 
   <div class="cart-content">
     <div class="cart-items" id="cartItems">
       <!-- Товары будут загружены через JavaScript -->
+      <div class="cart-loading">
+        <div class="loading-spinner"></div>
+        <p>Загрузка корзины...</p>
+      </div>
     </div>
 
     <div class="cart-summary">
@@ -15,16 +20,38 @@
         </div>
         <div class="summary-line">
           <span>Доставка:</span>
-          <span id="shippingCost">Бесплатно</span>
+          <span id="shippingCost">Рассчитывается</span>
         </div>
         <div class="summary-line total">
           <span>К оплате:</span>
           <span id="totalAmount">0 ₽</span>
         </div>
 
+        <div class="delivery-info" id="deliveryInfo" style="display: none;">
+          <div class="info-item">
+            <i class="fas fa-truck"></i>
+            <span>Бесплатная доставка от 1000 ₽</span>
+          </div>
+          <div class="info-item">
+            <i class="fas fa-clock"></i>
+            <span>Доставка 1-3 рабочих дня</span>
+          </div>
+        </div>
+
         <button class="btn btn-primary btn-large checkout-btn" id="checkoutBtn" disabled>
           Перейти к оформлению
         </button>
+
+        <div class="cart-actions">
+          <button class="btn btn-outline clear-cart-btn" id="clearCartBtn">
+            <i class="fas fa-trash"></i>
+            Очистить корзину
+          </button>
+          <a href="/catalog" class="btn btn-outline">
+            <i class="fas fa-arrow-left"></i>
+            Продолжить покупки
+          </a>
+        </div>
 
         <div class="payment-methods">
           <h4>Принимаем к оплате:</h4>
@@ -48,7 +75,25 @@
     </div>
   </div>
 
-  <div class="recommended-section">
+  <!-- Модальное окно подтверждения очистки корзины -->
+  <div class="modal" id="clearCartModal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Очистить корзину?</h3>
+        <button class="modal-close" onclick="closeClearCartModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>Вы уверены, что хотите удалить все товары из корзины?</p>
+        <p><small>Это действие нельзя отменить.</small></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeClearCartModal()">Отмена</button>
+        <button class="btn btn-danger" onclick="confirmClearCart()">Очистить</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="recommended-section" id="recommendedSection" style="display: none;">
     <h2>Рекомендуем также</h2>
     <div class="recommended-grid" id="recommendedItems">
       <!-- Рекомендуемые товары будут загружены через JavaScript -->
@@ -58,125 +103,100 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    loadCartItems();
-    updateCartSummary();
+    initCartPage();
   });
 
-  function loadCartItems() {
-    const cart = JSON.parse(localStorage.getItem('manga-cart') || '[]');
-    const cartItemsContainer = document.getElementById('cartItems');
-    const emptyCart = document.getElementById('emptyCart');
+  async function initCartPage() {
+    await loadCartItems();
+    await loadRecommendedItems();
+    initCartEventListeners();
+  }
 
-    if (cart.length === 0) {
-      cartItemsContainer.style.display = 'none';
-      emptyCart.style.display = 'block';
-      return;
+  function initCartEventListeners() {
+    // Кнопка оформления заказа
+    const checkoutBtn = document.getElementById('checkoutBtn');
+    if (checkoutBtn) {
+      checkoutBtn.addEventListener('click', () => {
+        window.location.href = '/checkout';
+      });
     }
 
-    cartItemsContainer.style.display = 'block';
-    emptyCart.style.display = 'none';
+    // Кнопка очистки корзины
+    const clearCartBtn = document.getElementById('clearCartBtn');
+    if (clearCartBtn) {
+      clearCartBtn.addEventListener('click', showClearCartModal);
+    }
+  }
 
-    // Здесь нужно загрузить данные о товарах из API
-    // Пока используем моковые данные
-    const mockItems = [
-      {
-        id: 1,
-        title: 'Attack on Titan',
-        author: 'Hajime Isayama',
-        price: 599,
-        image: '/images/aot.jpg',
-        inStock: true
-      },
-      {
-        id: 2,
-        title: 'One Piece',
-        author: 'Eiichiro Oda',
-        price: 699,
-        image: '/images/onepiece.jpg',
-        inStock: true
+  async function loadRecommendedItems() {
+    try {
+      // Загружаем рекомендуемые товары
+      const response = await fetch('/api/manga/featured');
+      if (response.ok) {
+        const featured = await response.json();
+        displayRecommendedItems(featured.slice(0, 4)); // Показываем 4 товара
       }
-    ];
+    } catch (error) {
+      console.error('Error loading recommended items:', error);
+    }
+  }
 
-    cartItemsContainer.innerHTML = cart.map(cartItem => {
-      const item = mockItems.find(i => i.id === cartItem.id);
-      if (!item) return '';
+  function displayRecommendedItems(items) {
+    const container = document.getElementById('recommendedItems');
+    const section = document.getElementById('recommendedSection');
 
-      return `
-      <div class="cart-item" data-id="${item.id}">
+    if (!container || !items.length) return;
+
+    container.innerHTML = items.map(manga => `
+      <div class="recommended-item">
         <div class="item-image">
-          <img src="${item.image}" alt="${item.title}">
+          <img src="${manga.imageUrl || '/images/placeholder.jpg'}" alt="${manga.title}">
         </div>
         <div class="item-info">
-          <h3>${item.title}</h3>
-          <p>${item.author}</p>
-          <div class="item-availability">
-            ${item.inStock ? '<span class="in-stock">В наличии</span>' : '<span class="out-of-stock">Нет в наличии</span>'}
-          </div>
-        </div>
-        <div class="item-quantity">
-          <button class="quantity-btn minus" onclick="changeQuantity(${item.id}, -1)">-</button>
-          <span class="quantity">${cartItem.quantity}</span>
-          <button class="quantity-btn plus" onclick="changeQuantity(${item.id}, 1)">+</button>
-        </div>
-        <div class="item-price">
-          <span class="price">${item.price * cartItem.quantity} ₽</span>
-          <span class="unit-price">${item.price} ₽ за шт.</span>
-        </div>
-        <div class="item-actions">
-          <button class="remove-btn" onclick="removeFromCart(${item.id})">
-            <i class="fas fa-trash"></i>
+          <h4><a href="/manga/${manga.id}">${manga.title}</a></h4>
+          <div class="item-price">${formatPrice(manga.price)}</div>
+          <button class="btn btn-sm btn-primary" onclick="addToCart(${manga.id})">
+            В корзину
           </button>
         </div>
       </div>
-    `;
-    }).join('');
+    `).join('');
+
+    section.style.display = 'block';
   }
 
-  function changeQuantity(id, change) {
-    let cart = JSON.parse(localStorage.getItem('manga-cart') || '[]');
-    const item = cart.find(item => item.id === id);
+  function showClearCartModal() {
+    document.getElementById('clearCartModal').style.display = 'block';
+  }
 
-    if (item) {
-      item.quantity += change;
-      if (item.quantity <= 0) {
-        cart = cart.filter(item => item.id !== id);
+  function closeClearCartModal() {
+    document.getElementById('clearCartModal').style.display = 'none';
+  }
+
+  async function confirmClearCart() {
+    try {
+      const response = await fetch(`/api/cart/${getSessionId()}/clear`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        closeClearCartModal();
+        showNotification('Корзина очищена', 'success');
+        await loadCartItems();
+        await updateCartCounter();
+      } else {
+        throw new Error('Ошибка при очистке корзины');
       }
+    } catch (error) {
+      showNotification(error.message, 'error');
     }
-
-    localStorage.setItem('manga-cart', JSON.stringify(cart));
-    loadCartItems();
-    updateCartSummary();
-    updateCartCounter();
   }
 
-  function removeFromCart(id) {
-    let cart = JSON.parse(localStorage.getItem('manga-cart') || '[]');
-    cart = cart.filter(item => item.id !== id);
-    localStorage.setItem('manga-cart', JSON.stringify(cart));
-    loadCartItems();
-    updateCartSummary();
-    updateCartCounter();
-    showNotification('Товар удален из корзины', 'info');
-  }
-
-  function updateCartSummary() {
-    const cart = JSON.parse(localStorage.getItem('manga-cart') || '[]');
-    const mockPrices = { 1: 599, 2: 699, 3: 549, 4: 579 };
-
-    let total = 0;
-    cart.forEach(item => {
-      total += (mockPrices[item.id] || 0) * item.quantity;
-    });
-
-    document.getElementById('itemsTotal').textContent = total + ' ₽';
-    document.getElementById('totalAmount').textContent = total + ' ₽';
-
-    const checkoutBtn = document.getElementById('checkoutBtn');
-    if (cart.length > 0) {
-      checkoutBtn.disabled = false;
-      checkoutBtn.onclick = () => window.location.href = '/checkout';
-    } else {
-      checkoutBtn.disabled = true;
+  // Закрытие модального окна при клике вне его
+  window.onclick = function(event) {
+    const modal = document.getElementById('clearCartModal');
+    if (event.target === modal) {
+      closeClearCartModal();
     }
   }
 </script>

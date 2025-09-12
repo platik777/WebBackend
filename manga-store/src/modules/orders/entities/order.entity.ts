@@ -1,3 +1,4 @@
+// src/modules/orders/entities/order.entity.ts
 import {
   Order as PrismaOrder,
   OrderStatus,
@@ -18,7 +19,7 @@ export type OrderWithRelations = PrismaOrder & {
     firstName: string;
     lastName: string;
     email: string;
-  };
+  } | null;
 };
 
 export class Order implements PrismaOrder {
@@ -31,7 +32,13 @@ export class Order implements PrismaOrder {
   shippingPhone: string;
   paymentMethod: string | null;
   paymentStatus: PaymentStatus;
-  userId: number;
+  userId: number | null;
+
+  // Новые поля для гостевых заказов
+  customerEmail: string | null;
+  customerFirstName: string | null;
+  customerLastName: string | null;
+
   createdAt: Date;
   updatedAt: Date;
   shippedAt: Date | null;
@@ -45,7 +52,7 @@ export class Order implements PrismaOrder {
     firstName: string;
     lastName: string;
     email: string;
-  };
+  } | null;
 
   constructor(partial: Partial<OrderWithRelations>) {
     Object.assign(this, partial);
@@ -92,6 +99,22 @@ export class Order implements PrismaOrder {
     return this.orderItems
       .map((item) => `${item.manga.title} x${item.quantity}`)
       .join(', ');
+  }
+
+  // Получить имя клиента (для гостевых заказов или пользователей)
+  get customerName(): string {
+    if (this.user) {
+      return `${this.user.firstName} ${this.user.lastName}`;
+    }
+    if (this.customerFirstName && this.customerLastName) {
+      return `${this.customerFirstName} ${this.customerLastName}`;
+    }
+    return 'Клиент';
+  }
+
+  // Получить email клиента
+  get customerEmailAddress(): string {
+    return this.user?.email || this.customerEmail || '';
   }
 
   // Методы для изменения статуса заказа

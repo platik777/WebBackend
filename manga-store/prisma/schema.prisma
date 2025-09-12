@@ -21,8 +21,9 @@ model User {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  orders  Order[]
-  reviews Review[]
+  orders   Order[]
+  reviews  Review[]
+  CartItem CartItem[]
 
   @@map("users")
 }
@@ -90,6 +91,7 @@ model Manga {
   mangaGenres  MangaGenre[]
   orderItems   OrderItem[]
   reviews      Review[]
+  CartItem     CartItem[]
 
   @@map("mangas")
 }
@@ -119,25 +121,28 @@ model MangaGenre {
 }
 
 model Order {
-  id          Int         @id @default(autoincrement())
-  orderNumber String      @unique @map("order_number")
-  status      OrderStatus @default(PENDING)
-  totalAmount Decimal     @map("total_amount") @db.Decimal(10, 2)
+  id              Int           @id @default(autoincrement())
+  orderNumber     String        @unique
+  status          OrderStatus   @default(PENDING)
+  totalAmount     Decimal       @db.Decimal(10, 2)
+  shippingAddress String
+  shippingCity    String
+  shippingPhone   String
+  paymentMethod   String?
+  paymentStatus   PaymentStatus @default(PENDING)
+  userId          Int? // Может быть null для гостевых заказов
 
-  shippingAddress String @map("shipping_address")
-  shippingCity    String @map("shipping_city")
-  shippingPhone   String @map("shipping_phone")
+  // Поля для гостевых заказов
+  customerEmail     String?
+  customerFirstName String?
+  customerLastName  String?
 
-  paymentMethod String?       @map("payment_method")
-  paymentStatus PaymentStatus @default(PENDING) @map("payment_status")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  shippedAt DateTime?
 
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  shippedAt DateTime? @map("shipped_at")
-
-  userId Int  @map("user_id")
-  user   User @relation(fields: [userId], references: [id])
-
+  // Связи
+  user       User?       @relation(fields: [userId], references: [id])
   orderItems OrderItem[]
 
   @@map("orders")
@@ -174,6 +179,24 @@ model Review {
 
   @@unique([userId, mangaId])
   @@map("reviews")
+}
+
+model CartItem {
+  id        Int      @id @default(autoincrement())
+  mangaId   Int
+  quantity  Int
+  price     Decimal  @db.Decimal(10, 2)
+  sessionId String // Для гостевых пользователей
+  userId    Int? // Для авторизованных пользователей
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Связи
+  manga Manga @relation(fields: [mangaId], references: [id], onDelete: Cascade)
+  user  User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([mangaId, sessionId])
+  @@map("cart_items")
 }
 
 enum OrderStatus {

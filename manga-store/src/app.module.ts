@@ -8,6 +8,7 @@ import { MangaModule } from './modules/manga/manga.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { AuthorsModule } from './modules/authors/authors.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
+import { CartModule } from './modules/cart/cart.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { ReviewsModule } from './modules/reviews/reviews.module';
     OrdersModule,
     AuthorsModule,
     ReviewsModule,
+    CartModule,
   ],
   controllers: [AppController],
   providers: [AppService],

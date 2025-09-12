@@ -1,302 +1,506 @@
-{{#if error}}
-  <div class="error-message">
-    <h2>{{error}}</h2>
-    <a href="/login" class="btn btn-primary">Войти в систему</a>
-  </div>
-{{else}}
-  <div class="orders-page">
-    <div class="orders-header">
-      <h1 class="page-title">Мои заказы</h1>
-      <div class="orders-filters">
-        <select class="filter-select" id="statusFilter">
-          <option value="">Все статусы</option>
-          <option value="PENDING">Ожидает обработки</option>
-          <option value="PROCESSING">В обработке</option>
-          <option value="SHIPPED">Отправлен</option>
-          <option value="DELIVERED">Доставлен</option>
-          <option value="CANCELLED">Отменен</option>
-        </select>
-        <select class="filter-select" id="periodFilter">
-          <option value="">Все время</option>
-          <option value="month">За месяц</option>
-          <option value="quarter">За 3 месяца</option>
-          <option value="year">За год</option>
-        </select>
-      </div>
+<!-- Обновленная страница оформления заказа views/checkout.hbs -->
+<div class="checkout-page">
+  <h1 class="page-title">Оформление заказа</h1>
+
+  <!-- Прогресс-бар -->
+  <div class="checkout-progress">
+    <div class="progress-step active">
+      <div class="step-number">1</div>
+      <span>Контакты</span>
     </div>
+    <div class="progress-step active">
+      <div class="step-number">2</div>
+      <span>Доставка</span>
+    </div>
+    <div class="progress-step">
+      <div class="step-number">3</div>
+      <span>Оплата</span>
+    </div>
+  </div>
 
-    {{#if orders.length}}
-      <div class="orders-list">
-        {{#each orders}}
-          <div class="order-card" data-status="{{status}}">
-            <div class="order-header">
-              <div class="order-info">
-                <div class="order-number">Заказ №{{orderNumber}}</div>
-                <div class="order-date">{{createdAt}}</div>
+  <div class="checkout-content">
+    <div class="checkout-form-section">
+      <form class="checkout-form" id="checkoutForm">
+        <div class="form-section">
+          <h3>1. Контактная информация</h3>
+          {{#if user}}
+            <div class="form-group">
+              <label for="email">Email:</label>
+              <input type="email" id="email" name="email" value="{{user.email}}" readonly>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="firstName">Имя:</label>
+                <input type="text" id="firstName" name="firstName" value="{{user.firstName}}" required>
               </div>
-              <div class="order-status">
-                <span class="status-badge status-{{status}}">
-                  {{#eq status "PENDING"}}Ожидает обработки{{/eq}}
-                  {{#eq status "PROCESSING"}}В обработке{{/eq}}
-                  {{#eq status "SHIPPED"}}Отправлен{{/eq}}
-                  {{#eq status "DELIVERED"}}Доставлен{{/eq}}
-                  {{#eq status "CANCELLED"}}Отменен{{/eq}}
-                </span>
+              <div class="form-group">
+                <label for="lastName">Фамилия:</label>
+                <input type="text" id="lastName" name="lastName" value="{{user.lastName}}" required>
               </div>
             </div>
-
-            <div class="order-content">
-              <div class="order-items">
-                <h4>Товары:</h4>
-                <div class="items-list">
-                  {{#each items}}
-                    <div class="order-item">
-                      <span class="item-title">{{title}}</span>
-                      <span class="item-quantity">× {{quantity}}</span>
-                      <span class="item-price">{{price}} ₽</span>
-                    </div>
-                  {{/each}}
-                </div>
+          {{else}}
+            <div class="form-group">
+              <label for="email">Email:</label>
+              <input type="email" id="email" name="email" required placeholder="your@email.com">
+              <small class="form-hint">На этот email придет подтверждение заказа</small>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="firstName">Имя:</label>
+                <input type="text" id="firstName" name="firstName" required placeholder="Ваше имя">
               </div>
-
-              <div class="order-shipping">
-                <h4>Доставка:</h4>
-                <p>{{shippingAddress}}</p>
+              <div class="form-group">
+                <label for="lastName">Фамилия:</label>
+                <input type="text" id="lastName" name="lastName" required placeholder="Ваша фамилия">
               </div>
             </div>
+          {{/if}}
+          <div class="form-group">
+            <label for="phone">Телефон:</label>
+            <input type="tel" id="phone" name="phone" placeholder="+7 (___) ___-__-__" required>
+            <small class="form-hint">Курьер свяжется с вами по этому номеру</small>
+          </div>
+        </div>
 
-            <div class="order-footer">
-              <div class="order-total">
-                <strong>Итого: {{totalAmount}} ₽</strong>
-              </div>
-              <div class="order-actions">
-                <button class="btn btn-outline btn-small" onclick="viewOrderDetails({{id}})">
-                  Подробнее
-                </button>
-                {{#eq status "PENDING"}}
-                  <button class="btn btn-danger btn-small" onclick="cancelOrder({{id}})">
-                    Отменить
-                  </button>
-                {{/eq}}
-                {{#eq status "DELIVERED"}}
-                  <button class="btn btn-primary btn-small" onclick="reorderItems({{id}})">
-                    Повторить заказ
-                  </button>
-                {{/eq}}
-              </div>
+        <div class="form-section">
+          <h3>2. Адрес доставки</h3>
+          <div class="form-group">
+            <label for="city">Город:</label>
+            <input type="text" id="city" name="city" required placeholder="Ваш город">
+          </div>
+          <div class="form-group">
+            <label for="address">Адрес:</label>
+            <textarea id="address" name="address" rows="3" placeholder="Улица, дом, квартира" required></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="postalCode">Почтовый индекс:</label>
+              <input type="text" id="postalCode" name="postalCode" placeholder="123456">
+            </div>
+            <div class="form-group">
+              <label for="floor">Этаж:</label>
+              <input type="text" id="floor" name="floor" placeholder="Необязательно">
             </div>
           </div>
-        {{/each}}
-      </div>
+        </div>
 
-      <!-- Пагинация -->
-      <div class="pagination">
-        <button class="btn btn-outline" disabled>← Предыдущая</button>
-        <span class="pagination-info">Страница 1 из 1</span>
-        <button class="btn btn-outline" disabled>Следующая →</button>
-      </div>
-    {{else}}
-      <div class="empty-orders">
-        <div class="empty-state">
-          <i class="fas fa-shopping-bag"></i>
-          <h3>У вас пока нет заказов</h3>
-          <p>Перейдите в каталог и выберите интересную мангу</p>
-          <a href="/catalog" class="btn btn-primary">Перейти в каталог</a>
+        <div class="form-section">
+          <h3>3. Способ оплаты</h3>
+          <div class="payment-methods">
+            <label class="payment-option">
+              <input type="radio" name="paymentMethod" value="card" checked>
+              <div class="payment-card">
+                <div class="payment-icon">
+                  <i class="fab fa-cc-visa"></i>
+                  <i class="fab fa-cc-mastercard"></i>
+                </div>
+                <div class="payment-info">
+                  <h4>Банковская карта</h4>
+                  <p>Visa, Mastercard, Мир</p>
+                </div>
+              </div>
+            </label>
+
+            <label class="payment-option">
+              <input type="radio" name="paymentMethod" value="cash">
+              <div class="payment-card">
+                <div class="payment-icon">
+                  <i class="fas fa-money-bill-wave"></i>
+                </div>
+                <div class="payment-info">
+                  <h4>Наличными при получении</h4>
+                  <p>Оплата курьеру</p>
+                </div>
+              </div>
+            </label>
+
+            <label class="payment-option">
+              <input type="radio" name="paymentMethod" value="sbp">
+              <div class="payment-card">
+                <div class="payment-icon">
+                  <i class="fas fa-qrcode"></i>
+                </div>
+                <div class="payment-info">
+                  <h4>СБП (QR-код)</h4>
+                  <p>Быстрая оплата по QR</p>
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>4. Комментарий к заказу</h3>
+          <div class="form-group">
+            <label for="notes">Дополнительная информация:</label>
+            <textarea id="notes" name="notes" rows="3" placeholder="Особые пожелания к доставке, комментарии..."></textarea>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-outline" onclick="window.location.href='/cart'">
+            <i class="fas fa-arrow-left"></i>
+            Вернуться в корзину
+          </button>
+          <button type="submit" class="btn btn-primary btn-large">
+            <span class="btn-text">Оформить заказ</span>
+            <div class="btn-spinner" style="display: none;">
+              <i class="fas fa-spinner fa-spin"></i>
+            </div>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div class="order-summary">
+      <div class="summary-card">
+        <h3>Ваш заказ</h3>
+
+        <div class="order-items" id="orderItems">
+          <!-- Товары будут загружены через JavaScript -->
+          <div class="summary-loading">
+            <i class="fas fa-spinner fa-spin"></i>
+            <span>Загрузка...</span>
+          </div>
+        </div>
+
+        <div class="summary-totals">
+          <div class="summary-line">
+            <span>Товары:</span>
+            <span id="itemsTotal">0 ₽</span>
+          </div>
+          <div class="summary-line">
+            <span>Доставка:</span>
+            <span id="shippingCost">Рассчитывается</span>
+          </div>
+          <div class="summary-line total">
+            <span>Итого:</span>
+            <span id="totalAmount">0 ₽</span>
+          </div>
+        </div>
+
+        <div class="delivery-estimate" id="deliveryEstimate">
+          <div class="estimate-item">
+            <i class="fas fa-truck"></i>
+            <span>Доставка: <strong>1-3 рабочих дня</strong></span>
+          </div>
+          <div class="estimate-item">
+            <i class="fas fa-shield-alt"></i>
+            <span>Гарантия возврата 14 дней</span>
+          </div>
         </div>
       </div>
-    {{/if}}
-  </div>
 
-  <!-- Модальное окно для детального просмотра заказа -->
-  <div class="modal" id="orderModal" style="display: none;">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3 id="modalOrderTitle">Детали заказа</h3>
-        <button class="modal-close" onclick="closeOrderModal()">&times;</button>
-      </div>
-      <div class="modal-body" id="modalOrderContent">
-        <!-- Содержимое будет загружено через JavaScript -->
+      <!-- Купон на скидку -->
+      <div class="coupon-section">
+        <div class="coupon-card">
+          <h4>Есть промокод?</h4>
+          <div class="coupon-input">
+            <input type="text" id="couponCode" placeholder="Введите промокод">
+            <button type="button" class="btn btn-outline" onclick="applyCoupon()">
+              Применить
+            </button>
+          </div>
+          <div class="coupon-result" id="couponResult" style="display: none;"></div>
+        </div>
       </div>
     </div>
   </div>
-{{/if}}
+
+  <!-- Модальное окно успешного заказа -->
+  <div class="modal" id="successModal" style="display: none;">
+    <div class="modal-content success-modal">
+      <div class="modal-body">
+        <div class="success-icon">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <h3>Заказ успешно оформлен!</h3>
+        <p>Номер заказа: <strong id="orderNumber"></strong></p>
+        <p>На ваш email отправлено подтверждение</p>
+        <div class="success-actions">
+          <button class="btn btn-primary" onclick="goToOrderDetails()">
+            Посмотреть заказ
+          </button>
+          <button class="btn btn-outline" onclick="continueShopping()">
+            Продолжить покупки
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
+  let orderData = null;
+
   document.addEventListener('DOMContentLoaded', function() {
-    initializeFilters();
+    initCheckoutPage();
   });
 
-  function initializeFilters() {
-    const statusFilter = document.getElementById('statusFilter');
-    const periodFilter = document.getElementById('periodFilter');
+  async function initCheckoutPage() {
+    await loadOrderSummary();
+    initFormValidation();
+    setupPaymentMethodHandlers();
+  }
 
-    if (statusFilter) {
-      statusFilter.addEventListener('change', applyFilters);
-    }
+  async function loadOrderSummary() {
+    try {
+      const summary = await getCartSummaryAPI();
+      const cartItems = await getCartAPI();
 
-    if (periodFilter) {
-      periodFilter.addEventListener('change', applyFilters);
+      if (!summary || cartItems.length === 0) {
+        // Если корзина пуста, перенаправляем на страницу корзины
+        window.location.href = '/cart';
+        return;
+      }
+
+      displayOrderItems(cartItems);
+      updateOrderSummary(summary);
+    } catch (error) {
+      console.error('Error loading order summary:', error);
+      showNotification('Ошибка загрузки заказа', 'error');
     }
   }
 
-  function applyFilters() {
-    const statusFilter = document.getElementById('statusFilter').value;
-    const periodFilter = document.getElementById('periodFilter').value;
-    const orderCards = document.querySelectorAll('.order-card');
+  function displayOrderItems(items) {
+    const container = document.getElementById('orderItems');
 
-    orderCards.forEach(card => {
-      let shouldShow = true;
+    container.innerHTML = items.map(item => `
+      <div class="order-item">
+        <div class="item-image">
+          <img src="${item.manga.imageUrl || '/images/placeholder.jpg'}" alt="${item.manga.title}">
+        </div>
+        <div class="item-details">
+          <h4>${item.manga.title}</h4>
+          <div class="item-meta">
+            <span class="quantity">×${item.quantity}</span>
+            <span class="price">${formatPrice(item.manga.price)}</span>
+          </div>
+        </div>
+        <div class="item-total">
+          ${formatPrice(item.manga.price * item.quantity)}
+        </div>
+      </div>
+    `).join('');
+  }
 
-      // Фильтр по статусу
-      if (statusFilter && card.dataset.status !== statusFilter) {
-        shouldShow = false;
+  function updateOrderSummary(summary) {
+    document.getElementById('itemsTotal').textContent = formatPrice(summary.availableAmount);
+    document.getElementById('shippingCost').textContent =
+      summary.shippingCost > 0 ? formatPrice(summary.shippingCost) : 'Бесплатно';
+    document.getElementById('totalAmount').textContent = formatPrice(summary.finalAmount);
+
+    // Показываем информацию о доставке
+    const deliveryEstimate = document.getElementById('deliveryEstimate');
+    if (summary.shippingCost === 0) {
+      deliveryEstimate.querySelector('.estimate-item').innerHTML = `
+        <i class="fas fa-truck"></i>
+        <span>Бесплатная доставка: <strong>1-3 рабочих дня</strong></span>
+      `;
+    }
+  }
+
+  function initFormValidation() {
+    const form = document.getElementById('checkoutForm');
+    const submitBtn = form.querySelector('button[type="submit"]');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (!validateForm()) return;
+
+      const formData = new FormData(form);
+      const checkoutData = {
+        email: formData.get('email'),
+        firstName: formData.get('firstName'),
+        lastName: formData.get('lastName'),
+        shippingPhone: formData.get('phone'),
+        shippingAddress: formData.get('address'),
+        shippingCity: formData.get('city'),
+        notes: formData.get('notes'),
+        paymentMethod: formData.get('paymentMethod'),
+      };
+
+      try {
+        submitBtn.disabled = true;
+        submitBtn.querySelector('.btn-text').style.display = 'none';
+        submitBtn.querySelector('.btn-spinner').style.display = 'inline-block';
+
+        orderData = await processCheckout(checkoutData);
+        showSuccessModal(orderData);
+      } catch (error) {
+        // Ошибка уже обработана в processCheckout
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.querySelector('.btn-text').style.display = 'inline';
+        submitBtn.querySelector('.btn-spinner').style.display = 'none';
       }
-
-      // Фильтр по периоду (здесь нужна дополнительная логика)
-      if (periodFilter) {
-        // Реализация фильтрации по периоду
-        // Требует дополнительных данных в HTML или API запрос
-      }
-
-      card.style.display = shouldShow ? 'block' : 'none';
     });
   }
 
-  async function viewOrderDetails(orderId) {
-    try {
-      // Здесь должен быть API запрос
-      // const response = await fetch(`/api/orders/${orderId}`);
-      // const order = await response.json();
+  function validateForm() {
+    const requiredFields = ['email', 'firstName', 'lastName', 'phone', 'city', 'address'];
+    let isValid = true;
 
-      // Моковые данные
-      const mockOrder = {
-        id: orderId,
-        orderNumber: `ORDER-${Date.now()}-${orderId.toString().padStart(3, '0')}`,
-        status: 'DELIVERED',
-        totalAmount: 1198,
-        createdAt: '15 января 2025',
-        shippingAddress: 'Москва, ул. Пушкина, д. 10, кв. 5',
-        paymentMethod: 'Банковская карта',
-        items: [
-          { title: 'Attack on Titan', quantity: 1, price: 599 },
-          { title: 'One Piece', quantity: 1, price: 699 }
-        ],
-        trackingNumber: 'RF123456789RU'
-      };
+    requiredFields.forEach(fieldName => {
+      const field = document.getElementsByName(fieldName)[0];
+      const value = field.value.trim();
 
-      showOrderModal(mockOrder);
-    } catch (error) {
-      showNotification('Ошибка загрузки данных заказа', 'error');
+      if (!value) {
+        showFieldError(field, 'Это поле обязательно');
+        isValid = false;
+      } else {
+        clearFieldError(field);
+
+        // Дополнительная валидация для email
+        if (fieldName === 'email' && !isValidEmail(value)) {
+          showFieldError(field, 'Введите корректный email');
+          isValid = false;
+        }
+
+        // Дополнительная валидация для телефона
+        if (fieldName === 'phone' && !isValidPhone(value)) {
+          showFieldError(field, 'Введите корректный номер телефона');
+          isValid = false;
+        }
+      }
+    });
+
+    return isValid;
+  }
+
+  function showFieldError(field, message) {
+    clearFieldError(field);
+    field.classList.add('error');
+
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'field-error';
+    errorDiv.textContent = message;
+    field.parentNode.appendChild(errorDiv);
+  }
+
+  function clearFieldError(field) {
+    field.classList.remove('error');
+    const existingError = field.parentNode.querySelector('.field-error');
+    if (existingError) {
+      existingError.remove();
     }
   }
 
-  function showOrderModal(order) {
-    const modal = document.getElementById('orderModal');
-    const title = document.getElementById('modalOrderTitle');
-    const content = document.getElementById('modalOrderContent');
-
-    title.textContent = `Заказ №${order.orderNumber}`;
-
-    content.innerHTML = `
-    <div class="order-detail-section">
-      <h4>Информация о заказе</h4>
-      <div class="detail-grid">
-        <div class="detail-item">
-          <span class="label">Статус:</span>
-          <span class="value status-badge status-${order.status}">${getStatusText(order.status)}</span>
-        </div>
-        <div class="detail-item">
-          <span class="label">Дата заказа:</span>
-          <span class="value">${order.createdAt}</span>
-        </div>
-        <div class="detail-item">
-          <span class="label">Сумма:</span>
-          <span class="value">${order.totalAmount} ₽</span>
-        </div>
-        <div class="detail-item">
-          <span class="label">Способ оплаты:</span>
-          <span class="value">${order.paymentMethod}</span>
-        </div>
-        ${order.trackingNumber ? `
-          <div class="detail-item">
-            <span class="label">Трек-номер:</span>
-            <span class="value">${order.trackingNumber}</span>
-          </div>
-        ` : ''}
-      </div>
-    </div>
-
-    <div class="order-detail-section">
-      <h4>Доставка</h4>
-      <p>${order.shippingAddress}</p>
-    </div>
-
-    <div class="order-detail-section">
-      <h4>Товары</h4>
-      <div class="modal-items-list">
-        ${order.items.map(item => `
-          <div class="modal-order-item">
-            <span class="item-title">${item.title}</span>
-            <span class="item-details">× ${item.quantity} = ${item.price * item.quantity} ₽</span>
-          </div>
-        `).join('')}
-      </div>
-    </div>
-  `;
-
-    modal.style.display = 'flex';
+  function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
   }
 
-  function closeOrderModal() {
-    document.getElementById('orderModal').style.display = 'none';
+  function isValidPhone(phone) {
+    const phoneRegex = /^[\+]?[0-9\s\-\(\)]{10,}$/;
+    return phoneRegex.test(phone);
   }
 
-  async function cancelOrder(orderId) {
-    if (!confirm('Вы уверены, что хотите отменить заказ?')) {
+  function setupPaymentMethodHandlers() {
+    const paymentOptions = document.querySelectorAll('input[name="paymentMethod"]');
+    paymentOptions.forEach(option => {
+      option.addEventListener('change', (e) => {
+        // Можно добавить логику для разных способов оплаты
+        updatePaymentInfo(e.target.value);
+      });
+    });
+  }
+
+  function updatePaymentInfo(method) {
+    // Обновляем информацию в зависимости от выбранного способа оплаты
+    const deliveryEstimate = document.getElementById('deliveryEstimate');
+
+    if (method === 'cash') {
+      // Для наличных может быть другое время доставки
+      deliveryEstimate.innerHTML = `
+        <div class="estimate-item">
+          <i class="fas fa-truck"></i>
+          <span>Доставка: <strong>1-3 рабочих дня</strong></span>
+        </div>
+        <div class="estimate-item">
+          <i class="fas fa-money-bill-wave"></i>
+          <span>Оплата курьеру при получении</span>
+        </div>
+      `;
+    } else {
+      deliveryEstimate.innerHTML = `
+        <div class="estimate-item">
+          <i class="fas fa-truck"></i>
+          <span>Доставка: <strong>1-3 рабочих дня</strong></span>
+        </div>
+        <div class="estimate-item">
+          <i class="fas fa-shield-alt"></i>
+          <span>Гарантия возврата 14 дней</span>
+        </div>
+      `;
+    }
+  }
+
+  async function applyCoupon() {
+    const couponCode = document.getElementById('couponCode').value.trim();
+    const resultDiv = document.getElementById('couponResult');
+
+    if (!couponCode) {
+      showCouponResult('Введите промокод', 'error');
       return;
     }
 
     try {
-      // Здесь должен быть API запрос
-      // await fetch(`/api/orders/${orderId}/status`, {
-      //   method: 'PATCH',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ status: 'CANCELLED' })
-      // });
+      // Здесь можно добавить API для проверки промокодов
+      // const response = await fetch('/api/coupons/validate', { ... });
 
-      showNotification('Заказ отменен', 'success');
-      setTimeout(() => window.location.reload(), 1000);
+      // Заглушка для демонстрации
+      if (couponCode.toUpperCase() === 'MANGA10') {
+        showCouponResult('Скидка 10% применена!', 'success');
+        // Обновляем итоговую сумму
+        updateDiscountedTotal(0.1); // 10% скидка
+      } else {
+        showCouponResult('Промокод не найден', 'error');
+      }
     } catch (error) {
-      showNotification('Ошибка при отмене заказа', 'error');
+      showCouponResult('Ошибка при проверке промокода', 'error');
     }
   }
 
-  async function reorderItems(orderId) {
-    try {
-      // Здесь должна быть логика добавления товаров из заказа в корзину
-      showNotification('Товары добавлены в корзину', 'success');
-      setTimeout(() => window.location.href = '/cart', 1000);
-    } catch (error) {
-      showNotification('Ошибка при повторном заказе', 'error');
+  function showCouponResult(message, type) {
+    const resultDiv = document.getElementById('couponResult');
+    resultDiv.className = `coupon-result ${type}`;
+    resultDiv.textContent = message;
+    resultDiv.style.display = 'block';
+  }
+
+  function updateDiscountedTotal(discountPercent) {
+    const totalElement = document.getElementById('totalAmount');
+    const currentTotal = parseFloat(totalElement.textContent.replace(/[^\d]/g, ''));
+    const discountedTotal = currentTotal * (1 - discountPercent);
+
+    totalElement.innerHTML = `
+      <span class="original-price">${formatPrice(currentTotal)}</span>
+      <span class="discounted-price">${formatPrice(discountedTotal)}</span>
+    `;
+  }
+
+  function showSuccessModal(order) {
+    document.getElementById('orderNumber').textContent = order.orderNumber;
+    document.getElementById('successModal').style.display = 'block';
+  }
+
+  function goToOrderDetails() {
+    if (orderData) {
+      window.location.href = `/orders/${orderData.id}`;
     }
   }
 
-  function getStatusText(status) {
-    const statusTexts = {
-      'PENDING': 'Ожидает обработки',
-      'PROCESSING': 'В обработке',
-      'SHIPPED': 'Отправлен',
-      'DELIVERED': 'Доставлен',
-      'CANCELLED': 'Отменен'
-    };
-    return statusTexts[status] || status;
+  function continueShopping() {
+    window.location.href = '/catalog';
   }
 
   // Закрытие модального окна при клике вне его
   window.onclick = function(event) {
-    const modal = document.getElementById('orderModal');
+    const modal = document.getElementById('successModal');
     if (event.target === modal) {
-      closeOrderModal();
+      goToOrderDetails();
     }
   }
 </script>
