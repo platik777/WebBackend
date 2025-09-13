@@ -42,7 +42,7 @@ function initializeMangaCards() {
 }
 
 // API Configuration
-const API_BASE_URL = '';  // В продакшене здесь будет полный URL
+const API_BASE_URL = '';
 
 // API Helper functions
 async function apiRequest(endpoint, options = {}) {

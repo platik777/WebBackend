@@ -21,9 +21,8 @@ model User {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  orders   Order[]
-  reviews  Review[]
-  CartItem CartItem[]
+  orders  Order[]
+  reviews Review[]
 
   @@map("users")
 }
@@ -91,7 +90,6 @@ model Manga {
   mangaGenres  MangaGenre[]
   orderItems   OrderItem[]
   reviews      Review[]
-  CartItem     CartItem[]
 
   @@map("mangas")
 }
@@ -179,24 +177,6 @@ model Review {
 
   @@unique([userId, mangaId])
   @@map("reviews")
-}
-
-model CartItem {
-  id        Int      @id @default(autoincrement())
-  mangaId   Int
-  quantity  Int
-  price     Decimal  @db.Decimal(10, 2)
-  sessionId String // Для гостевых пользователей
-  userId    Int? // Для авторизованных пользователей
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Связи
-  manga Manga @relation(fields: [mangaId], references: [id], onDelete: Cascade)
-  user  User? @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([mangaId, sessionId])
-  @@map("cart_items")
 }
 
 enum OrderStatus {

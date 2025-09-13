@@ -1,10 +1,14 @@
-<!-- Обновленная страница корзины views/cart.hbs -->
+<!-- views/cart.hbs -->
 <div class="cart-page">
-  <h1 class="page-title">Корзина</h1>
+  <h1 class="page-title">Корзина (упрощенная версия)</h1>
+
+  <div class="cart-notice">
+    <i class="fas fa-info-circle"></i>
+    <p>Это упрощенная версия корзины. Данные хранятся только в браузере и не сохраняются на сервере.</p>
+  </div>
 
   <div class="cart-content">
     <div class="cart-items" id="cartItems">
-      <!-- Товары будут загружены через JavaScript -->
       <div class="cart-loading">
         <div class="loading-spinner"></div>
         <p>Загрузка корзины...</p>
@@ -39,7 +43,7 @@
         </div>
 
         <button class="btn btn-primary btn-large checkout-btn" id="checkoutBtn" disabled>
-          Перейти к оформлению
+          Оформить заказ (упрощенно)
         </button>
 
         <div class="cart-actions">
@@ -54,7 +58,7 @@
         </div>
 
         <div class="payment-methods">
-          <h4>Принимаем к оплате:</h4>
+          <h4>В полной версии принимаем:</h4>
           <div class="payment-icons">
             <i class="fab fa-cc-visa"></i>
             <i class="fab fa-cc-mastercard"></i>
@@ -74,129 +78,203 @@
       <a href="/catalog" class="btn btn-primary">Перейти в каталог</a>
     </div>
   </div>
-
-  <!-- Модальное окно подтверждения очистки корзины -->
-  <div class="modal" id="clearCartModal" style="display: none;">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>Очистить корзину?</h3>
-        <button class="modal-close" onclick="closeClearCartModal()">&times;</button>
-      </div>
-      <div class="modal-body">
-        <p>Вы уверены, что хотите удалить все товары из корзины?</p>
-        <p><small>Это действие нельзя отменить.</small></p>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-outline" onclick="closeClearCartModal()">Отмена</button>
-        <button class="btn btn-danger" onclick="confirmClearCart()">Очистить</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="recommended-section" id="recommendedSection" style="display: none;">
-    <h2>Рекомендуем также</h2>
-    <div class="recommended-grid" id="recommendedItems">
-      <!-- Рекомендуемые товары будут загружены через JavaScript -->
-    </div>
-  </div>
 </div>
 
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    initCartPage();
-  });
-
-  async function initCartPage() {
-    await loadCartItems();
-    await loadRecommendedItems();
-    initCartEventListeners();
+<style>
+  .cart-notice {
+    background-color: #e3f2fd;
+    border: 1px solid #2196f3;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
   }
 
-  function initCartEventListeners() {
-    // Кнопка оформления заказа
-    const checkoutBtn = document.getElementById('checkoutBtn');
-    if (checkoutBtn) {
-      checkoutBtn.addEventListener('click', () => {
-        window.location.href = '/checkout';
-      });
-    }
-
-    // Кнопка очистки корзины
-    const clearCartBtn = document.getElementById('clearCartBtn');
-    if (clearCartBtn) {
-      clearCartBtn.addEventListener('click', showClearCartModal);
-    }
+  .cart-notice i {
+    color: #2196f3;
+    font-size: 18px;
   }
 
-  async function loadRecommendedItems() {
-    try {
-      // Загружаем рекомендуемые товары
-      const response = await fetch('/api/manga/featured');
-      if (response.ok) {
-        const featured = await response.json();
-        displayRecommendedItems(featured.slice(0, 4)); // Показываем 4 товара
-      }
-    } catch (error) {
-      console.error('Error loading recommended items:', error);
-    }
+  .cart-notice p {
+    margin: 0;
+    color: #1565c0;
+    font-weight: 500;
   }
 
-  function displayRecommendedItems(items) {
-    const container = document.getElementById('recommendedItems');
-    const section = document.getElementById('recommendedSection');
-
-    if (!container || !items.length) return;
-
-    container.innerHTML = items.map(manga => `
-      <div class="recommended-item">
-        <div class="item-image">
-          <img src="${manga.imageUrl || '/images/placeholder.jpg'}" alt="${manga.title}">
-        </div>
-        <div class="item-info">
-          <h4><a href="/manga/${manga.id}">${manga.title}</a></h4>
-          <div class="item-price">${formatPrice(manga.price)}</div>
-          <button class="btn btn-sm btn-primary" onclick="addToCart(${manga.id})">
-            В корзину
-          </button>
-        </div>
-      </div>
-    `).join('');
-
-    section.style.display = 'block';
+  .cart-loading {
+    text-align: center;
+    padding: 40px;
   }
 
-  function showClearCartModal() {
-    document.getElementById('clearCartModal').style.display = 'block';
+  .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #2196f3;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 16px;
   }
 
-  function closeClearCartModal() {
-    document.getElementById('clearCartModal').style.display = 'none';
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
   }
 
-  async function confirmClearCart() {
-    try {
-      const response = await fetch(`/api/cart/${getSessionId()}/clear`, {
-        method: 'DELETE'
-      });
-
-      if (response.ok) {
-        closeClearCartModal();
-        showNotification('Корзина очищена', 'success');
-        await loadCartItems();
-        await updateCartCounter();
-      } else {
-        throw new Error('Ошибка при очистке корзины');
-      }
-    } catch (error) {
-      showNotification(error.message, 'error');
-    }
+  .cart-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    background: white;
   }
 
-  // Закрытие модального окна при клике вне его
-  window.onclick = function(event) {
-    const modal = document.getElementById('clearCartModal');
-    if (event.target === modal) {
-      closeClearCartModal();
-    }
+  .item-image img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 4px;
   }
-</script>
+
+  .item-details {
+    flex: 1;
+  }
+
+  .item-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+    color: #333;
+  }
+
+  .item-status {
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+
+  .item-status.in-stock {
+    color: #4caf50;
+  }
+
+  .item-status.out-of-stock {
+    color: #f44336;
+  }
+
+  .item-price {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2196f3;
+  }
+
+  .item-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+  }
+
+  .quantity-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f5f5f5;
+    border-radius: 4px;
+    padding: 4px;
+  }
+
+  .quantity-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: white;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .quantity-btn:hover:not(:disabled) {
+    background: #e0e0e0;
+  }
+
+  .quantity-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .quantity {
+    min-width: 32px;
+    text-align: center;
+    font-weight: 600;
+  }
+
+  .item-total {
+    font-size: 18px;
+    font-weight: 700;
+    color: #333;
+  }
+
+  .remove-btn {
+    background: none;
+    border: none;
+    color: #f44336;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 4px;
+  }
+
+  .remove-btn:hover {
+    background: #ffebee;
+  }
+
+  .notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    color: white;
+    font-weight: 500;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: 400px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+
+  .notification-success {
+    background: #4caf50;
+  }
+
+  .notification-error {
+    background: #f44336;
+  }
+
+  .notification-info {
+    background: #2196f3;
+  }
+
+  .notification button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+</style>
+
+<script src="/js/cart.js"></script>
