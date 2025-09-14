@@ -53,10 +53,15 @@ export class MangaService {
     priceMin?: number;
     priceMax?: number;
     inStock?: boolean;
+    search?: string;
+    sort?: string;
   }): Promise<Manga[]> {
-    const where: any = {};
+    const where: any = {
+      isActive: true, // Только активные манги
+    };
 
     if (filters) {
+      // Фильтр по жанру
       if (filters.genre) {
         where.mangaGenres = {
           some: {
@@ -70,6 +75,7 @@ export class MangaService {
         };
       }
 
+      // Фильтр по автору
       if (filters.author) {
         where.mangaAuthors = {
           some: {
@@ -87,24 +93,56 @@ export class MangaService {
                     mode: 'insensitive',
                   },
                 },
+                {
+                  displayName: {
+                    contains: filters.author,
+                    mode: 'insensitive',
+                  },
+                },
               ],
             },
           },
         };
       }
 
+      // Фильтры по цене
       if (filters.priceMin !== undefined) {
         where.price = { ...where.price, gte: new Decimal(filters.priceMin) };
       }
-
       if (filters.priceMax !== undefined) {
         where.price = { ...where.price, lte: new Decimal(filters.priceMax) };
       }
 
-      if (filters.inStock) {
-        where.stock = { gt: 0 };
+      // Фильтр по наличию
+      if (filters.inStock !== undefined) {
+        if (filters.inStock) {
+          where.stock = { gt: 0 };
+        } else {
+          where.stock = { lte: 0 };
+        }
+      }
+
+      // Поиск по названию и описанию
+      if (filters.search) {
+        where.OR = [
+          {
+            title: {
+              contains: filters.search,
+              mode: 'insensitive',
+            },
+          },
+          {
+            description: {
+              contains: filters.search,
+              mode: 'insensitive',
+            },
+          },
+        ];
       }
     }
+
+    // Определяем сортировку
+    const orderBy = this.buildOrderBy(filters?.sort);
 
     const mangas = await this.prisma.manga.findMany({
       where,
@@ -126,17 +164,57 @@ export class MangaService {
           },
         },
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
+      orderBy,
     });
 
     return mangas.map((manga) => new Manga(manga as MangaWithRelations));
   }
 
+  /**
+   * Построить объект сортировки на основе параметра sort
+   */
+  private buildOrderBy(sort?: string): any {
+    if (!sort) {
+      return { createdAt: 'desc' }; // По умолчанию сортируем по дате создания
+    }
+
+    switch (sort) {
+      case 'title-asc':
+        return { title: 'asc' };
+      case 'title-desc':
+        return { title: 'desc' };
+      case 'price-asc':
+        return { price: 'asc' };
+      case 'price-desc':
+        return { price: 'desc' };
+      case 'author-asc':
+        return [
+          { mangaAuthors: { author: { lastName: 'asc' } } },
+          { mangaAuthors: { author: { firstName: 'asc' } } }
+        ];
+      case 'author-desc':
+        return [
+          { mangaAuthors: { author: { lastName: 'desc' } } },
+          { mangaAuthors: { author: { firstName: 'desc' } } }
+        ];
+      case 'newest':
+        return { createdAt: 'desc' };
+      case 'oldest':
+        return { createdAt: 'asc' };
+      case 'rating':
+        // Сортировка по рейтингу требует более сложного запроса
+        return { createdAt: 'desc' }; // Временно по дате
+      default:
+        return { createdAt: 'desc' };
+    }
+  }
+
   async findOne(id: number): Promise<Manga | null> {
     const manga = await this.prisma.manga.findUnique({
-      where: { id },
+      where: {
+        id,
+        isActive: true, // Только активные манги
+      },
       include: {
         publisher: true,
         mangaAuthors: {
@@ -169,12 +247,12 @@ export class MangaService {
     return manga ? new Manga(manga as MangaWithRelations) : null;
   }
 
-  async findFeatured(): Promise<Manga[]> {
-    // Возвращаем последние 6 добавленных манг как "рекомендуемые"
+  async findFeatured(limit: number = 8): Promise<Manga[]> {
     const mangas = await this.prisma.manga.findMany({
       where: {
         isActive: true,
-        stock: { gt: 0 },
+        stock: { gt: 0 }, // Только в наличии
+        isFeatured: true, // Предполагаем, что есть поле isFeatured
       },
       include: {
         publisher: true,
@@ -189,30 +267,54 @@ export class MangaService {
           },
         },
       },
+      take: limit,
       orderBy: {
         createdAt: 'desc',
       },
-      take: 6,
     });
+
+    // Если нет рекомендуемых, возвращаем последние добавленные в наличии
+    if (mangas.length === 0) {
+      const fallbackMangas = await this.prisma.manga.findMany({
+        where: {
+          isActive: true,
+          stock: { gt: 0 },
+        },
+        include: {
+          publisher: true,
+          mangaAuthors: {
+            include: {
+              author: true,
+            },
+          },
+          mangaGenres: {
+            include: {
+              genre: true,
+            },
+          },
+        },
+        take: limit,
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+
+      return fallbackMangas.map((manga) => new Manga(manga as MangaWithRelations));
+    }
 
     return mangas.map((manga) => new Manga(manga as MangaWithRelations));
   }
 
   async update(id: number, updateMangaDto: UpdateMangaDto): Promise<Manga> {
-    const updateData: any = { ...updateMangaDto };
-
-    if (updateData.price) {
-      updateData.price = new Decimal(updateData.price);
-    }
-
-    // Убираем поля, которые не относятся напрямую к manga
-    const { authorId, genreId, publisherId, ...mangaUpdateData } = updateData;
-
-    const manga = await this.prisma.manga.update({
+    const mangaData = await this.prisma.manga.update({
       where: { id },
       data: {
-        ...mangaUpdateData,
-        ...(publisherId && { publisherId }),
+        title: updateMangaDto.title,
+        description: updateMangaDto.description,
+        price: updateMangaDto.price ? new Decimal(updateMangaDto.price) : undefined,
+        stock: updateMangaDto.stock,
+        imageUrl: updateMangaDto.imageUrl,
+        publisherId: updateMangaDto.publisherId,
       },
       include: {
         publisher: true,
@@ -229,85 +331,55 @@ export class MangaService {
       },
     });
 
-    return new Manga(manga as MangaWithRelations);
+    return new Manga(mangaData as MangaWithRelations);
   }
 
   async remove(id: number): Promise<void> {
-    await this.prisma.manga.delete({
+    // Мягкое удаление - помечаем как неактивную
+    await this.prisma.manga.update({
       where: { id },
+      data: {
+        isActive: false,
+      },
     });
   }
 
   async updateStock(id: number, quantity: number): Promise<void> {
     await this.prisma.manga.update({
       where: { id },
-      data: { stock: { increment: quantity } },
+      data: {
+        stock: quantity,
+      },
     });
   }
 
-  async reserveStock(id: number, quantity: number): Promise<boolean> {
-    try {
-      const manga = await this.findOne(id);
-      if (!manga || !manga.canReserve(quantity)) {
-        return false;
-      }
+  async getMangaStats(): Promise<any> {
+    const totalMangas = await this.prisma.manga.count({
+      where: { isActive: true },
+    });
 
-      await this.prisma.manga.update({
-        where: { id },
-        data: { stock: { decrement: quantity } },
-      });
+    const inStockMangas = await this.prisma.manga.count({
+      where: {
+        isActive: true,
+        stock: { gt: 0 },
+      },
+    });
 
-      return true;
-    } catch (error) {
-      return false;
-    }
-  }
+    const outOfStockMangas = totalMangas - inStockMangas;
 
-  async getMangaStats() {
-    const [totalCount, inStockCount, avgPrice] = await Promise.all([
-      this.prisma.manga.count(),
-      this.prisma.manga.count({ where: { stock: { gt: 0 } } }),
-      this.prisma.manga.aggregate({
-        _avg: { price: true },
-      }),
-    ]);
+    const avgPrice = await this.prisma.manga.aggregate({
+      where: { isActive: true },
+      _avg: {
+        price: true,
+      },
+    });
 
     return {
-      totalManga: totalCount,
-      inStock: inStockCount,
-      averagePrice: avgPrice._avg.price,
+      total: totalMangas,
+      inStock: inStockMangas,
+      outOfStock: outOfStockMangas,
+      averagePrice: avgPrice._avg.price?.toNumber() || 0,
     };
-  }
-
-  // Поиск манги по названию
-  async searchByTitle(query: string): Promise<Manga[]> {
-    const mangas = await this.prisma.manga.findMany({
-      where: {
-        title: {
-          contains: query,
-          mode: 'insensitive',
-        },
-        isActive: true,
-      },
-      include: {
-        publisher: true,
-        mangaAuthors: {
-          include: {
-            author: true,
-          },
-        },
-        mangaGenres: {
-          include: {
-            genre: true,
-          },
-        },
-      },
-      orderBy: {
-        title: 'asc',
-      },
-    });
-
-    return mangas.map((manga) => new Manga(manga as MangaWithRelations));
   }
 
   // Получить похожие манги по жанрам

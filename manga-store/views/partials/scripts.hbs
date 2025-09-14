@@ -4,6 +4,11 @@
 {{!-- Логика корзины (нужна на всех страницах для счетчика) --}}
 <script src="/js/pages/cart.js" defer></script>
 
+{{!-- Клиентская фильтрация каталога (только на странице каталога) --}}
+{{#if (eq title "Каталог манги")}}
+  <script src="/js/client-catalog-filter.js" defer></script>
+{{/if}}
+
 {{!-- Страничные скрипты --}}
 {{#if (eq title "Профиль пользователя")}}
   <script src="/js/pages/profile.js" defer></script>
@@ -12,6 +17,3 @@
 {{#if (eq title "Оформление заказа")}}
   <script src="/js/pages/checkout.js" defer></script>
 {{/if}}
-
-{{!-- Компоненты (если понадобятся в будущем) --}}
-<script src="/js/components.js" defer></script>

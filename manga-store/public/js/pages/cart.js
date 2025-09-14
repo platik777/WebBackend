@@ -1,3 +1,21 @@
+// cart.js - Исправленная версия с правильной обработкой данных
+
+// Мок-данные для корзины (синхронизируем с main.js)
+function getMockMangaData(id) {
+  const mockData = {
+    1: { title: 'Наруто', price: 599, imageUrl: '/images/naruto.jpg', inStock: true, author: 'Масаси Кисимото' },
+    2: { title: 'Атака титанов', price: 699, imageUrl: '/images/aot.jpg', inStock: true, author: 'Хадзиме Исаяма' },
+    3: { title: 'Ван Пис', price: 549, imageUrl: '/images/onepiece.jpg', inStock: false, author: 'Эйитиро Ода' },
+    4: { title: 'Моя геройская академия', price: 579, imageUrl: '/images/mha.jpg', inStock: true, author: 'Кохэй Хорикоси' },
+    5: { title: 'Берсерк', price: 799, imageUrl: '/images/berserk.jpg', inStock: true, author: 'Кэнтаро Миура' },
+    6: { title: 'Магическая битва', price: 659, imageUrl: '/images/jjk.jpg', inStock: true, author: 'Гэгэ Акутами' },
+    7: { title: 'Убийца демонов', price: 619, imageUrl: '/images/demon-slayer.jpg', inStock: true, author: 'Коёхару Готогэ' },
+    8: { title: 'Мобильный воин Гандам', price: 729, imageUrl: '/images/gundam.jpg', inStock: true, author: 'Ёсиюки Томино' }
+  };
+
+  return mockData[id % 8 + 1];
+}
+
 // Получить корзину из localStorage
 function getCart() {
   try {
@@ -18,23 +36,32 @@ function saveCart(cart) {
   }
 }
 
-// Добавить товар в корзину
-function addToCart(mangaId, quantity = 1) {
+// ИСПРАВЛЕННАЯ ФУНКЦИЯ: Добавить товар в корзину
+function addToCart(mangaId, mangaData = null, quantity = 1) {
   const cart = getCart();
-  const existingItem = cart.find(item => item.id === parseInt(mangaId));
+  const id = parseInt(mangaId);
+  const existingItem = cart.find(item => item.id === id);
+
+  // Получаем данные манги, если не переданы
+  if (!mangaData) {
+    mangaData = getMockMangaData(id);
+  }
 
   if (existingItem) {
     existingItem.quantity += quantity;
   } else {
     cart.push({
-      id: parseInt(mangaId),
+      id: id,
       quantity: quantity,
       addedAt: new Date().toISOString()
     });
   }
 
   saveCart(cart);
-  showNotification('Товар добавлен в корзину', 'success');
+
+  if (window.showNotification) {
+    showNotification(`"${mangaData.title}" добавлен в корзину`, 'success');
+  }
 }
 
 // Удалить товар из корзины
@@ -47,7 +74,9 @@ function removeFromCart(mangaId) {
     loadCartItems();
   }
 
-  showNotification('Товар удален из корзины', 'info');
+  if (window.showNotification) {
+    showNotification('Товар удален из корзины', 'info');
+  }
 }
 
 // Обновить количество товара
@@ -59,7 +88,7 @@ function updateCartQuantity(mangaId, quantity) {
     if (quantity <= 0) {
       removeFromCart(mangaId);
     } else {
-      item.quantity = quantity;
+      item.quantity = parseInt(quantity);
       saveCart(cart);
 
       if (window.location.pathname === '/cart') {
@@ -78,7 +107,9 @@ function clearCart() {
     loadCartItems();
   }
 
-  showNotification('Корзина очищена', 'success');
+  if (window.showNotification) {
+    showNotification('Корзина очищена', 'success');
+  }
 }
 
 // Получить общее количество товаров в корзине
@@ -87,73 +118,67 @@ function getCartTotal() {
   return cart.reduce((total, item) => total + item.quantity, 0);
 }
 
-// Обновить счетчик корзины в навигации
 function updateCartCounter() {
   const totalItems = getCartTotal();
   const counter = document.querySelector('.cart-counter');
 
   if (counter) {
     counter.textContent = totalItems;
-    counter.style.display = totalItems > 0 ? 'inline' : 'none';
+
+    if (totalItems > 0) {
+      counter.style.display = 'flex';
+      counter.classList.add('visible');
+
+      if (totalItems > 9) {
+        counter.classList.add('large-number');
+      } else {
+        counter.classList.remove('large-number');
+      }
+
+      counter.classList.add('pulse');
+      setTimeout(() => {
+        counter.classList.remove('pulse');
+      }, 800);
+
+    } else {
+      counter.style.display = 'none';
+      counter.classList.remove('visible', 'large-number');
+    }
   }
 }
 
-// Получить мок-данные для товара
-function getMockMangaData(id) {
-  const mockData = {
-    1: { title: 'Наруто', price: 599, imageUrl: '/images/naruto.jpg', inStock: true, author: 'Масаси Кисимото' },
-    2: { title: 'Атака титанов', price: 699, imageUrl: '/images/aot.jpg', inStock: true, author: 'Хадзиме Исаяма' },
-    3: { title: 'Ван Пис', price: 549, imageUrl: '/images/onepiece.jpg', inStock: false, author: 'Эйитиро Ода' },
-    4: { title: 'Моя геройская академия', price: 579, imageUrl: '/images/mha.jpg', inStock: true, author: 'Кохэй Хорикоси' },
-    5: { title: 'Берсерк', price: 799, imageUrl: '/images/berserk.jpg', inStock: true, author: 'Кэнтаро Миура' },
-    6: { title: 'Магическая битва', price: 659, imageUrl: '/images/jjk.jpg', inStock: true, author: 'Гэгэ Акутами' },
-    7: { title: 'Убийца демонов', price: 619, imageUrl: '/images/demon-slayer.jpg', inStock: true, author: 'Коёхару Готогэ' },
-    8: { title: 'Мобильный воин Гандам', price: 729, imageUrl: '/images/gundam.jpg', inStock: false, author: 'Ёсиюки Томино' }
-  };
-
-  return mockData[id % 8 + 1];
-}
-
-// Загрузить товары корзины на странице
-async function loadCartItems() {
-  const cartItemsContainer = document.getElementById('cartItems');
-  const emptyCart = document.getElementById('emptyCart');
+// ИСПРАВЛЕННАЯ ФУНКЦИЯ: Загрузить товары корзины на странице
+function loadCartItems() {
+  const container = document.getElementById('cartItems');
   const cart = getCart();
 
+  if (!container) return;
+
   if (cart.length === 0) {
-    if (cartItemsContainer) cartItemsContainer.style.display = 'none';
-    if (emptyCart) emptyCart.style.display = 'block';
-    updateCartSummary([]);
+    showEmptyCart();
     return;
   }
 
-  if (cartItemsContainer) cartItemsContainer.style.display = 'block';
-  if (emptyCart) emptyCart.style.display = 'none';
-
-  // Загружаем информацию о товарах с мок-данными
-  const cartItemsWithDetails = cart.map(item => {
-    const mockManga = getMockMangaData(item.id);
+  // Получаем полные данные для каждого товара в корзине
+  const cartWithDetails = cart.map(cartItem => {
+    const mangaData = getMockMangaData(cartItem.id);
     return {
-      ...item,
-      ...mockManga
+      id: cartItem.id,
+      quantity: cartItem.quantity,
+      title: mangaData.title,
+      author: mangaData.author,
+      price: mangaData.price,
+      imageUrl: mangaData.imageUrl,
+      inStock: mangaData.inStock
     };
   });
 
-  renderCartItems(cartItemsWithDetails);
-  updateCartSummary(cartItemsWithDetails);
-}
-
-// Отрендерить товары в корзине
-function renderCartItems(items) {
-  const container = document.getElementById('cartItems');
-  if (!container) return;
-
   container.innerHTML = `
     <div class="cart-items-list">
-      ${items.map(item => `
-        <div class="cart-item ${!item.inStock ? 'unavailable' : ''}" data-id="${item.id}">
+      ${cartWithDetails.map(item => `
+        <div class="cart-item ${!item.inStock ? 'out-of-stock' : ''}">
           <div class="item-image">
-            <img src="${item.imageUrl}" alt="${item.title}" loading="lazy">
+            <img src="${item.imageUrl}" alt="${item.title}" />
             ${!item.inStock ? `
               <div class="stock-overlay">
                 <span class="stock-status">Нет в наличии</span>
@@ -177,7 +202,7 @@ function renderCartItems(items) {
                       ${!item.inStock ? 'disabled' : ''}>+</button>
             </div>
             <div class="item-total">${formatPrice(item.price * item.quantity)}</div>
-            <button class="remove-btn" onclick="removeFromCart(${item.id})">
+            <button class="remove-btn" onclick="removeFromCart(${item.id})" title="Удалить из корзины">
               <i class="fas fa-trash"></i>
             </button>
           </div>
@@ -185,11 +210,52 @@ function renderCartItems(items) {
       `).join('')}
     </div>
   `;
+
+  // Обновляем итоги
+  updateCartSummary(cartWithDetails);
 }
 
-// Обновить итоги корзины
+// Показать пустую корзину
+function showEmptyCart() {
+  const container = document.getElementById('cartItems');
+  if (!container) return;
+
+  container.innerHTML = `
+    <div class="empty-cart">
+      <i class="fas fa-shopping-cart empty-icon"></i>
+      <h3>Корзина пуста</h3>
+      <p>Добавьте товары из каталога для совершения покупки</p>
+      <a href="/catalog" class="btn btn-primary">Перейти в каталог</a>
+    </div>
+  `;
+
+  // Очищаем итоги
+  const summaryElements = {
+    itemsTotal: document.getElementById('itemsTotal'),
+    shippingCost: document.getElementById('shippingCost'),
+    totalAmount: document.getElementById('totalAmount'),
+    checkoutBtn: document.getElementById('checkoutBtn')
+  };
+
+  Object.values(summaryElements).forEach(el => {
+    if (el) {
+      if (el.tagName === 'BUTTON') {
+        el.disabled = true;
+      } else {
+        el.textContent = formatPrice(0);
+      }
+    }
+  });
+}
+
+// ИСПРАВЛЕННАЯ ФУНКЦИЯ: Обновить итоги корзины
 function updateCartSummary(items) {
-  const itemsTotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const itemsTotal = items.reduce((sum, item) => {
+    const price = typeof item.price === 'number' ? item.price : 0;
+    const quantity = typeof item.quantity === 'number' ? item.quantity : 0;
+    return sum + (price * quantity);
+  }, 0);
+
   const shippingCost = itemsTotal >= 1000 ? 0 : 200; // Бесплатная доставка от 1000₽
   const totalAmount = itemsTotal + shippingCost;
 
@@ -216,11 +282,12 @@ function updateCartSummary(items) {
 
 // Форматировать цену
 function formatPrice(price) {
+  const numPrice = typeof price === 'number' ? price : parseFloat(price) || 0;
   return new Intl.NumberFormat('ru-RU', {
     style: 'currency',
     currency: 'RUB',
     maximumFractionDigits: 0
-  }).format(price);
+  }).format(numPrice);
 }
 
 // Перейти к оформлению заказа
@@ -228,7 +295,9 @@ function proceedToCheckout() {
   const cart = getCart();
 
   if (cart.length === 0) {
-    showNotification('Корзина пуста', 'error');
+    if (window.showNotification) {
+      showNotification('Корзина пуста', 'error');
+    }
     return;
   }
 
@@ -241,36 +310,41 @@ function proceedToCheckout() {
   const unavailableItems = cartWithDetails.filter(item => !item.inStock);
 
   if (unavailableItems.length > 0) {
-    showNotification('В корзине есть недоступные товары', 'error');
+    if (window.showNotification) {
+      showNotification('В корзине есть недоступные товары', 'error');
+    }
     return;
   }
 
-  // В упрощенной версии просто показываем сообщение
-  if (confirm('Перейти к оформлению заказа?\n(В упрощенной версии заказ не будет сохранен)')) {
-    showNotification('Упрощенная версия: заказ оформлен!', 'success');
-    clearCart();
-    setTimeout(() => {
-      window.location.href = '/';
-    }, 2000);
-  }
+  // Переходим к оформлению заказа
+  window.location.href = '/checkout';
 }
 
-// Показать уведомление
+// Показать уведомление (fallback, если нет глобальной функции)
 function showNotification(message, type = 'info') {
-  // Удаляем существующие уведомления
-  const existingNotifications = document.querySelectorAll('.notification');
-  existingNotifications.forEach(notification => notification.remove());
+  if (window.showNotification) {
+    window.showNotification(message, type);
+    return;
+  }
 
+  // Простая реализация уведомлений
   const notification = document.createElement('div');
-  notification.className = `notification notification-${type}`;
-  notification.innerHTML = `
-    <span>${message}</span>
-    <button onclick="this.parentElement.remove()">&times;</button>
+  notification.className = `cart-notification notification-${type}`;
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 1rem;
+    background: ${type === 'success' ? '#d4edda' : type === 'error' ? '#f8d7da' : '#d1ecf1'};
+    color: ${type === 'success' ? '#155724' : type === 'error' ? '#721c24' : '#0c5460'};
+    border-radius: 8px;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   `;
+  notification.textContent = message;
 
   document.body.appendChild(notification);
 
-  // Автоматически убираем уведомление через 3 секунды
   setTimeout(() => {
     if (notification.parentElement) {
       notification.remove();
@@ -311,3 +385,4 @@ window.updateCartQuantity = updateCartQuantity;
 window.clearCart = clearCart;
 window.getCart = getCart;
 window.updateCartCounter = updateCartCounter;
+window.getMockMangaData = getMockMangaData;

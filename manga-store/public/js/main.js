@@ -1,34 +1,9 @@
-// Упрощенная версия main.js - убираем API мок-функции, оставляем только корзину и базовый функционал
-
 // Конфигурация приложения
 const APP_CONFIG = {
   cartStorageKey: 'manga-cart',
   userStorageKey: 'user-profile',
   settingsStorageKey: 'user-settings'
 };
-
-// Мок-данные для каталога (ТОЛЬКО для корзины, каталог теперь из БД)
-function getMockMangaData(id) {
-  // Эти данные используются только для корзины localStorage
-  const mockData = {
-    1: { title: 'Наруто', price: 599, imageUrl: '/images/naruto.jpg', inStock: true, author: 'Масаси Кисимото' },
-    2: { title: 'Атака титанов', price: 699, imageUrl: '/images/aot.jpg', inStock: true, author: 'Хадзиме Исаяма' },
-    3: { title: 'Ван Пис', price: 549, imageUrl: '/images/onepiece.jpg', inStock: false, author: 'Эйитиро Ода' },
-    4: { title: 'Моя геройская академия', price: 579, imageUrl: '/images/mha.jpg', inStock: true, author: 'Кохэй Хорикоси' },
-    5: { title: 'Берсерк', price: 799, imageUrl: '/images/berserk.jpg', inStock: true, author: 'Кэнтаро Миура' },
-    6: { title: 'Магическая битва', price: 659, imageUrl: '/images/jjk.jpg', inStock: true, author: 'Гэгэ Акутами' },
-    7: { title: 'Убийца демонов', price: 619, imageUrl: '/images/demon-slayer.jpg', inStock: true, author: 'Коёхару Готогэ' },
-    8: { title: 'Мобильный воин Гандам', price: 729, imageUrl: '/images/gundam.jpg', inStock: false, author: 'Ёсиюки Томино' }
-  };
-
-  return mockData[id] || {
-    title: 'Неизвестная манга',
-    price: 500,
-    imageUrl: '/images/placeholder.jpg',
-    inStock: false,
-    author: 'Неизвестный автор'
-  };
-}
 
 // Инициализация кнопок добавления в корзину
 function initializeAddToCartButtons() {
@@ -37,17 +12,35 @@ function initializeAddToCartButtons() {
     button.addEventListener('click', (e) => {
       e.preventDefault();
       const mangaId = parseInt(button.getAttribute('data-manga-id'));
-      const mangaData = getMockMangaData(mangaId);
+
+      // Пробуем получить данные из карточки манги (data-атрибуты)
+      const mangaCard = button.closest('.manga-card');
+      let mangaData = null;
+
+      if (mangaCard) {
+        mangaData = {
+          title: mangaCard.getAttribute('data-title') || 'Неизвестная манга',
+          author: mangaCard.getAttribute('data-author') || 'Неизвестный автор',
+          price: parseFloat(mangaCard.getAttribute('data-price')) || 500,
+          imageUrl: mangaCard.querySelector('img')?.src || '/images/placeholder.jpg',
+          inStock: mangaCard.getAttribute('data-stock') === '1'
+        };
+      } else {
+        // Fallback к мок-данным
+        mangaData = getMockMangaData(mangaId);
+      }
 
       if (window.addToCart) {
         window.addToCart(mangaId, mangaData);
-        showNotification(`"${mangaData.title}" добавлена в корзину!`, 'success');
+        // Уведомление будет показано внутри addToCart
+      } else {
+        showNotification('Ошибка: функция корзины недоступна', 'error');
       }
     });
   });
 }
 
-// ВОССТАНОВЛЕННАЯ ФУНКЦИЯ ПОИСКА
+// Функция поиска
 function initializeSearch() {
   const searchForm = document.querySelector('.search-container');
   const searchInput = document.querySelector('.search-input');
@@ -76,58 +69,16 @@ function initializeSearch() {
   }
 }
 
-// Простая заглушка для фильтров (не работают)
-function initializeFilters() {
-  const filterSelects = document.querySelectorAll('.filter-select');
-  filterSelects.forEach(select => {
-    select.addEventListener('change', () => {
-      showNotification('Фильтры временно недоступны', 'info');
-    });
-  });
-
-  const clearFiltersBtn = document.getElementById('clearFilters');
-  if (clearFiltersBtn) {
-    clearFiltersBtn.addEventListener('click', () => {
-      filterSelects.forEach(select => {
-        select.value = '';
-      });
-      showNotification('Фильтры очищены', 'info');
-    });
-  }
-}
-
-// Заглушки для экспорта (для совместимости)
-function clearFilters() {
-  const filterSelects = document.querySelectorAll('.filter-select');
-  filterSelects.forEach(select => {
-    select.value = '';
-  });
-  showNotification('Фильтры очищены', 'info');
-}
-
+// Реализация поиска через перенаправление на каталог с параметром поиска
 function performSearch(query) {
-  showNotification('Поиск временно недоступен', 'info');
-  return [];
-}
+  if (!query || query.trim() === '') {
+    showNotification('Введите запрос для поиска', 'warning');
+    return;
+  }
 
-// Обработка глобальных ошибок
-function handleGlobalError(error) {
-  console.error('Глобальная ошибка:', error);
-
-  const notification = document.createElement('div');
-  notification.className = 'notification notification-error';
-  notification.innerHTML = `
-    <span>Произошла ошибка в приложении. Попробуйте обновить страницу.</span>
-    <button onclick="this.parentElement.remove()">&times;</button>
-  `;
-
-  document.body.appendChild(notification);
-
-  setTimeout(() => {
-    if (notification.parentElement) {
-      notification.remove();
-    }
-  }, 5000);
+  // Перенаправляем на каталог с параметром поиска
+  const searchUrl = `/catalog?search=${encodeURIComponent(query.trim())}`;
+  window.location.href = searchUrl;
 }
 
 // Универсальная система уведомлений
@@ -160,66 +111,36 @@ function showNotification(message, type = 'info') {
   };
 
   const style = styles[type] || styles.info;
-  notification.style.background = style.background;
-  notification.style.borderLeft = style.borderLeft;
-  notification.style.color = style.color;
+  Object.assign(notification.style, style);
 
   notification.innerHTML = `
-    <div style="display: flex; justify-content: space-between; align-items: center;">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
       <span>${message}</span>
       <button onclick="this.parentElement.parentElement.remove()" 
-              style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: inherit; margin-left: 1rem;">
-        &times;
-      </button>
+              style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: inherit;">&times;</button>
     </div>
   `;
 
   document.body.appendChild(notification);
 
+  // Автоматически убираем через 5 секунд
   setTimeout(() => {
     if (notification.parentElement) {
-      notification.remove();
+      notification.style.animation = 'slideOutRight 0.3s ease';
+      setTimeout(() => {
+        if (notification.parentElement) {
+          notification.remove();
+        }
+      }, 300);
     }
   }, 5000);
 }
 
-// Инициализация приложения
-function initializeApp() {
-  console.log('Manga Store - Инициализация приложения');
-
-  // Инициализируем корзину
-  if (window.updateCartCounter) {
-    window.updateCartCounter();
-  }
-
-  // Инициализируем кнопки добавления в корзину
-  initializeAddToCartButtons();
-
-  // Инициализируем поиск (заглушка)
-  initializeSearch();
-
-  // Инициализируем фильтры (заглушка), если мы на странице каталога
-  if (window.location.pathname === '/catalog') {
-    initializeFilters();
-  }
-
-  // Обработчик глобальных ошибок
-  window.addEventListener('error', handleGlobalError);
-  window.addEventListener('unhandledrejection', (e) => {
-    handleGlobalError(e.reason);
-  });
-
-  console.log('Приложение инициализировано успешно');
-}
-
-// Инициализация при загрузке DOM
-document.addEventListener('DOMContentLoaded', initializeApp);
-
 // CSS анимации для уведомлений
-if (!document.querySelector('#mainNotificationStyles')) {
-  const style = document.createElement('style');
-  style.id = 'mainNotificationStyles';
-  style.textContent = `
+if (!document.querySelector('#notification-styles')) {
+  const styles = document.createElement('style');
+  styles.id = 'notification-styles';
+  styles.textContent = `
     @keyframes slideInRight {
       from {
         transform: translateX(100%);
@@ -230,12 +151,41 @@ if (!document.querySelector('#mainNotificationStyles')) {
         opacity: 1;
       }
     }
+    
+    @keyframes slideOutRight {
+      from {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      to {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+    }
   `;
-  document.head.appendChild(style);
+  document.head.appendChild(styles);
 }
 
-// Экспорт функций для использования в других файлах
-window.getMockMangaData = getMockMangaData;
-window.clearFilters = clearFilters;
+// Инициализация при загрузке DOM
+document.addEventListener('DOMContentLoaded', () => {
+  // Инициализируем поиск
+  initializeSearch();
+
+  // Инициализируем кнопки добавления в корзину
+  initializeAddToCartButtons();
+
+  // Обработка глобальных ошибок
+  window.addEventListener('error', (event) => {
+    handleGlobalError(event.error);
+  });
+
+  // Обработка необработанных Promise ошибок
+  window.addEventListener('unhandledrejection', (event) => {
+    handleGlobalError(event.reason);
+  });
+});
+
+// Экспорт функций для использования в других модулях
+window.initializeAddToCartButtons = initializeAddToCartButtons;
 window.performSearch = performSearch;
 window.showNotification = showNotification;

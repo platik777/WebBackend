@@ -65,8 +65,11 @@ export class AppController {
   @Render('catalog')
   async getCatalogPage(
     @Query('auth') isAuthenticated?: string,
-    @Query() filters?: any,
+    @Query() queryParams?: any,
   ) {
+    // Преобразуем query параметры в формат для MangaService
+    const filters = this.parseFiltersFromQuery(queryParams);
+
     // Получаем мангу с фильтрами из базы данных
     const mangas = await this.mangaService.findAll(filters);
 
@@ -91,29 +94,14 @@ export class AppController {
             'Неизвестен',
           price: manga.price.toNumber(),
           image: manga.imageUrl || '/images/placeholder.jpg',
+          description: manga.description || '',
+          inStock: manga.isAvailable,
           genre:
             mangaData.mangaGenres
               ?.map((mg: any) => mg.genre?.name)
               .join(', ') || '',
-          inStock: manga.isAvailable,
         };
       }),
-    };
-  }
-
-  @Get('about')
-  @Render('about')
-  getAboutPage(@Query('auth') isAuthenticated?: string) {
-    return {
-      title: 'О нас',
-      user:
-        isAuthenticated === 'true'
-          ? {
-            name: 'Пользователь',
-            email: 'user@example.com',
-            isAuthenticated: true,
-          }
-          : null,
     };
   }
 
@@ -128,8 +116,7 @@ export class AppController {
       throw new NotFoundException('Манга не найдена');
     }
 
-    const reviews = await this.reviewsService.findByMangaId(id);
-    const mangaData = manga as any; // Временное решение для Prisma include данных
+    const mangaData = manga as any;
 
     return {
       title: `${manga.title} - Manga Store`,
@@ -144,43 +131,47 @@ export class AppController {
       manga: {
         id: manga.id,
         title: manga.title,
-        description: manga.description,
         author:
           mangaData.mangaAuthors?.[0]?.author?.displayName ||
           `${mangaData.mangaAuthors?.[0]?.author?.firstName} ${mangaData.mangaAuthors?.[0]?.author?.lastName}` ||
           'Неизвестен',
         price: manga.price.toNumber(),
-        discountPrice: manga.discountPrice?.toNumber() || null,
         image: manga.imageUrl || '/images/placeholder.jpg',
-        genre:
-          mangaData.mangaGenres?.map((mg: any) => mg.genre?.name).join(', ') ||
-          '',
+        description: manga.description || '',
         inStock: manga.isAvailable,
         stock: manga.stock,
-        pages: manga.pages,
-        language: manga.language,
+        genre:
+          mangaData.mangaGenres
+            ?.map((mg: any) => mg.genre?.name)
+            .join(', ') || '',
         publisher: mangaData.publisher?.name || 'Неизвестно',
-        publishDate: manga.publishDate?.toLocaleDateString('ru-RU') || null,
+        language: 'Русский',
       },
-      reviews: reviews.map((review) => {
-        const reviewData = review as any; // Временное решение для Prisma include данных
-        return {
-          id: review.id,
-          rating: review.rating,
-          comment: review.comment,
-          userName: reviewData.user
-            ? `${reviewData.user.firstName} ${reviewData.user.lastName}`
-            : 'Аноним',
-          date: review.getFormattedDate ? review.getFormattedDate() :
-            new Date(review.createdAt).toLocaleDateString('ru-RU'),
-        };
-      }),
+    };
+  }
+
+  @Get('about')
+  @Render('about')
+  getAboutPage(@Query('auth') isAuthenticated?: string) {
+    return {
+      title: 'О нас - Manga Store',
+      user:
+        isAuthenticated === 'true'
+          ? {
+            name: 'Пользователь',
+            email: 'user@example.com',
+            isAuthenticated: true,
+          }
+          : null,
     };
   }
 
   @Get('profile')
   @Render('profile')
-  async getProfilePage(@Query('userId') userId?: string) {
+  async getProfilePage(
+    @Query('auth') isAuthenticated?: string,
+    @Query('userId') userId?: string,
+  ) {
     if (!userId) {
       return { title: 'Профиль', error: 'Необходимо войти в систему' };
     }
@@ -305,5 +296,53 @@ export class AppController {
     return {
       title: 'Регистрация',
     };
+  }
+
+  /**
+   * Преобразует query параметры в формат фильтров для MangaService
+   */
+  private parseFiltersFromQuery(queryParams: any): any {
+    if (!queryParams) return {};
+
+    const filters: any = {};
+
+    // Фильтр по жанру
+    if (queryParams.genre && queryParams.genre.trim()) {
+      filters.genre = queryParams.genre.trim();
+    }
+
+    // Фильтр по автору
+    if (queryParams.author && queryParams.author.trim()) {
+      filters.author = queryParams.author.trim();
+    }
+
+    // Фильтр по наличию
+    if (queryParams.inStock) {
+      if (queryParams.inStock === 'in-stock') {
+        filters.inStock = true;
+      } else if (queryParams.inStock === 'out-of-stock') {
+        filters.inStock = false;
+      }
+    }
+
+    // Фильтры по цене
+    if (queryParams.priceMin && !isNaN(parseFloat(queryParams.priceMin))) {
+      filters.priceMin = parseFloat(queryParams.priceMin);
+    }
+    if (queryParams.priceMax && !isNaN(parseFloat(queryParams.priceMax))) {
+      filters.priceMax = parseFloat(queryParams.priceMax);
+    }
+
+    // Поиск
+    if (queryParams.search && queryParams.search.trim()) {
+      filters.search = queryParams.search.trim();
+    }
+
+    // Сортировка
+    if (queryParams.sort && queryParams.sort.trim()) {
+      filters.sort = queryParams.sort.trim();
+    }
+
+    return filters;
   }
 }
