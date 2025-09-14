@@ -1,3 +1,4 @@
+// Получить корзину из localStorage
 function getCart() {
   try {
     return JSON.parse(localStorage.getItem('manga-cart') || '[]');
@@ -7,6 +8,7 @@ function getCart() {
   }
 }
 
+// Сохранить корзину в localStorage
 function saveCart(cart) {
   try {
     localStorage.setItem('manga-cart', JSON.stringify(cart));
@@ -16,18 +18,17 @@ function saveCart(cart) {
   }
 }
 
+// Добавить товар в корзину
 function addToCart(mangaId, quantity = 1) {
   const cart = getCart();
-  const existingItem = cart.find(item => item.id === mangaId);
+  const existingItem = cart.find(item => item.id === parseInt(mangaId));
 
   if (existingItem) {
     existingItem.quantity += quantity;
   } else {
-    // Добавляем товар с базовой информацией
     cart.push({
-      id: mangaId,
+      id: parseInt(mangaId),
       quantity: quantity,
-      // Дополнительные поля будут загружаться при отображении
       addedAt: new Date().toISOString()
     });
   }
@@ -36,20 +37,23 @@ function addToCart(mangaId, quantity = 1) {
   showNotification('Товар добавлен в корзину', 'success');
 }
 
+// Удалить товар из корзины
 function removeFromCart(mangaId) {
   const cart = getCart();
-  const filteredCart = cart.filter(item => item.id !== mangaId);
+  const filteredCart = cart.filter(item => item.id !== parseInt(mangaId));
   saveCart(filteredCart);
 
-  // Если мы на странице корзины, обновляем отображение
   if (window.location.pathname === '/cart') {
     loadCartItems();
   }
+
+  showNotification('Товар удален из корзины', 'info');
 }
 
+// Обновить количество товара
 function updateCartQuantity(mangaId, quantity) {
   const cart = getCart();
-  const item = cart.find(item => item.id === mangaId);
+  const item = cart.find(item => item.id === parseInt(mangaId));
 
   if (item) {
     if (quantity <= 0) {
@@ -58,7 +62,6 @@ function updateCartQuantity(mangaId, quantity) {
       item.quantity = quantity;
       saveCart(cart);
 
-      // Если мы на странице корзины, обновляем отображение
       if (window.location.pathname === '/cart') {
         loadCartItems();
       }
@@ -66,6 +69,7 @@ function updateCartQuantity(mangaId, quantity) {
   }
 }
 
+// Очистить корзину
 function clearCart() {
   localStorage.removeItem('manga-cart');
   updateCartCounter();
@@ -77,11 +81,13 @@ function clearCart() {
   showNotification('Корзина очищена', 'success');
 }
 
+// Получить общее количество товаров в корзине
 function getCartTotal() {
   const cart = getCart();
   return cart.reduce((total, item) => total + item.quantity, 0);
 }
 
+// Обновить счетчик корзины в навигации
 function updateCartCounter() {
   const totalItems = getCartTotal();
   const counter = document.querySelector('.cart-counter');
@@ -92,7 +98,23 @@ function updateCartCounter() {
   }
 }
 
-// Функции для страницы корзины
+// Получить мок-данные для товара
+function getMockMangaData(id) {
+  const mockData = {
+    1: { title: 'Наруто', price: 599, imageUrl: '/images/naruto.jpg', inStock: true, author: 'Масаси Кисимото' },
+    2: { title: 'Атака титанов', price: 699, imageUrl: '/images/aot.jpg', inStock: true, author: 'Хадзиме Исаяма' },
+    3: { title: 'Ван Пис', price: 549, imageUrl: '/images/onepiece.jpg', inStock: false, author: 'Эйитиро Ода' },
+    4: { title: 'Моя геройская академия', price: 579, imageUrl: '/images/mha.jpg', inStock: true, author: 'Кохэй Хорикоси' },
+    5: { title: 'Берсерк', price: 799, imageUrl: '/images/berserk.jpg', inStock: true, author: 'Кэнтаро Миура' },
+    6: { title: 'Магическая битва', price: 659, imageUrl: '/images/jjk.jpg', inStock: true, author: 'Гэгэ Акутами' },
+    7: { title: 'Убийца демонов', price: 619, imageUrl: '/images/demon-slayer.jpg', inStock: true, author: 'Коёхару Готогэ' },
+    8: { title: 'Мобильный воин Гандам', price: 729, imageUrl: '/images/gundam.jpg', inStock: false, author: 'Ёсиюки Томино' }
+  };
+
+  return mockData[id % 8];
+}
+
+// Загрузить товары корзины на странице
 async function loadCartItems() {
   const cartItemsContainer = document.getElementById('cartItems');
   const emptyCart = document.getElementById('emptyCart');
@@ -108,40 +130,20 @@ async function loadCartItems() {
   if (cartItemsContainer) cartItemsContainer.style.display = 'block';
   if (emptyCart) emptyCart.style.display = 'none';
 
-  // Загружаем информацию о товарах (мок-данные)
-  const cartItemsWithDetails = await Promise.all(
-    cart.map(async (item) => {
-      // В реальном приложении здесь был бы запрос к API
-      const mockManga = getMockMangaData(item.id);
-      return {
-        ...item,
-        ...mockManga
-      };
-    })
-  );
+  // Загружаем информацию о товарах с мок-данными
+  const cartItemsWithDetails = cart.map(item => {
+    const mockManga = getMockMangaData(item.id);
+    return {
+      ...item,
+      ...mockManga
+    };
+  });
 
   renderCartItems(cartItemsWithDetails);
   updateCartSummary(cartItemsWithDetails);
 }
 
-function getMockMangaData(id) {
-  // Мок-данные для товаров (в реальном приложении данные приходили бы с сервера)
-  const mockData = {
-    1: { title: 'Наруто', price: 599, imageUrl: '/images/naruto.jpg', inStock: true },
-    2: { title: 'Атака титанов', price: 699, imageUrl: '/images/aot.jpg', inStock: true },
-    3: { title: 'Ван Пис', price: 549, imageUrl: '/images/onepiece.jpg', inStock: false },
-    4: { title: 'Моя геройская академия', price: 579, imageUrl: '/images/mha.jpg', inStock: true },
-    5: { title: 'Берсерк', price: 799, imageUrl: '/images/berserk.jpg', inStock: true }
-  };
-
-  return mockData[id] || {
-    title: 'Неизвестная манга',
-    price: 500,
-    imageUrl: '/images/placeholder.jpg',
-    inStock: false
-  };
-}
-
+// Отрендерить товары в корзине
 function renderCartItems(items) {
   const container = document.getElementById('cartItems');
   if (!container) return;
@@ -149,12 +151,18 @@ function renderCartItems(items) {
   container.innerHTML = `
     <div class="cart-items-list">
       ${items.map(item => `
-        <div class="cart-item" data-id="${item.id}">
+        <div class="cart-item ${!item.inStock ? 'unavailable' : ''}" data-id="${item.id}">
           <div class="item-image">
             <img src="${item.imageUrl}" alt="${item.title}" loading="lazy">
+            ${!item.inStock ? `
+              <div class="stock-overlay">
+                <span class="stock-status">Нет в наличии</span>
+              </div>
+            ` : ''}
           </div>
           <div class="item-details">
             <h3 class="item-title">${item.title}</h3>
+            ${item.author ? `<p class="item-author">${item.author}</p>` : ''}
             <div class="item-status ${item.inStock ? 'in-stock' : 'out-of-stock'}">
               ${item.inStock ? '✓ В наличии' : '⚠ Нет в наличии'}
             </div>
@@ -162,10 +170,10 @@ function renderCartItems(items) {
           </div>
           <div class="item-actions">
             <div class="quantity-controls">
-              <button class="quantity-btn minus" onclick="updateCartQuantity(${item.id}, ${item.quantity - 1})" 
-                      ${item.quantity <= 1 ? 'disabled' : ''}>-</button>
+              <button class="quantity-btn" onclick="updateCartQuantity(${item.id}, ${item.quantity - 1})" 
+                      ${item.quantity <= 1 || !item.inStock ? 'disabled' : ''}>-</button>
               <span class="quantity">${item.quantity}</span>
-              <button class="quantity-btn plus" onclick="updateCartQuantity(${item.id}, ${item.quantity + 1})"
+              <button class="quantity-btn" onclick="updateCartQuantity(${item.id}, ${item.quantity + 1})"
                       ${!item.inStock ? 'disabled' : ''}>+</button>
             </div>
             <div class="item-total">${formatPrice(item.price * item.quantity)}</div>
@@ -179,6 +187,7 @@ function renderCartItems(items) {
   `;
 }
 
+// Обновить итоги корзины
 function updateCartSummary(items) {
   const itemsTotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const shippingCost = itemsTotal >= 1000 ? 0 : 200; // Бесплатная доставка от 1000₽
@@ -205,6 +214,7 @@ function updateCartSummary(items) {
   }
 }
 
+// Форматировать цену
 function formatPrice(price) {
   return new Intl.NumberFormat('ru-RU', {
     style: 'currency',
@@ -213,7 +223,7 @@ function formatPrice(price) {
   }).format(price);
 }
 
-// Функция для checkout (упрощенная)
+// Перейти к оформлению заказа
 function proceedToCheckout() {
   const cart = getCart();
 
@@ -223,10 +233,12 @@ function proceedToCheckout() {
   }
 
   // Проверяем наличие товаров
-  const unavailableItems = cart.filter(item => {
-    const mockData = getMockMangaData(item.id);
-    return !mockData.inStock;
-  });
+  const cartWithDetails = cart.map(item => ({
+    ...item,
+    ...getMockMangaData(item.id)
+  }));
+
+  const unavailableItems = cartWithDetails.filter(item => !item.inStock);
 
   if (unavailableItems.length > 0) {
     showNotification('В корзине есть недоступные товары', 'error');
@@ -234,7 +246,7 @@ function proceedToCheckout() {
   }
 
   // В упрощенной версии просто показываем сообщение
-  if (confirm('Перейти к оформлению заказа? (В упрощенной версии заказ не будет сохранен)')) {
+  if (confirm('Перейти к оформлению заказа?\n(В упрощенной версии заказ не будет сохранен)')) {
     showNotification('Упрощенная версия: заказ оформлен!', 'success');
     clearCart();
     setTimeout(() => {
@@ -243,8 +255,12 @@ function proceedToCheckout() {
   }
 }
 
-// Утилиты для уведомлений
+// Показать уведомление
 function showNotification(message, type = 'info') {
+  // Удаляем существующие уведомления
+  const existingNotifications = document.querySelectorAll('.notification');
+  existingNotifications.forEach(notification => notification.remove());
+
   const notification = document.createElement('div');
   notification.className = `notification notification-${type}`;
   notification.innerHTML = `
@@ -288,8 +304,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// Глобальные функции для использования в HTML
+// Экспорт функций для использования в других файлах
 window.addToCart = addToCart;
 window.removeFromCart = removeFromCart;
 window.updateCartQuantity = updateCartQuantity;
 window.clearCart = clearCart;
+window.getCart = getCart;
+window.updateCartCounter = updateCartCounter;

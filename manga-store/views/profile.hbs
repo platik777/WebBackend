@@ -75,16 +75,14 @@
               {{#each orders}}
                 <div class="order-card">
                   <div class="order-header">
-                    <div class="order-number">Заказ №{{orderNumber}}</div>
-                    <div class="order-status status-{{status}}">{{status}}</div>
+                    <div class="order-number">Заказ #{{id}}</div>
+                    <div class="order-date">{{createdAt}}</div>
                   </div>
-                  <div class="order-details">
-                    <p><strong>Дата:</strong> {{createdAt}}</p>
-                    <p><strong>Сумма:</strong> {{totalAmount}} ₽</p>
-                    <p><strong>Товаров:</strong> {{itemsCount}}</p>
+                  <div class="order-status">
+                    <span class="status-badge status-{{status}}">{{status}}</span>
                   </div>
-                  <div class="order-actions">
-                    <a href="/orders/{{id}}" class="btn btn-outline btn-small">Подробнее</a>
+                  <div class="order-total">
+                    Итого: {{total}} ₽
                   </div>
                 </div>
               {{/each}}
@@ -93,7 +91,7 @@
             <div class="empty-state">
               <i class="fas fa-shopping-bag"></i>
               <h4>У вас пока нет заказов</h4>
-              <p>Перейдите в каталог и выберите интересную мангу</p>
+              <p>Оформите первый заказ в нашем каталоге</p>
               <a href="/catalog" class="btn btn-primary">Перейти в каталог</a>
             </div>
           {{/if}}
@@ -105,52 +103,69 @@
             <div class="reviews-list">
               {{#each reviews}}
                 <div class="review-card">
-                  <div class="review-manga">{{mangaTitle}}</div>
+                  <div class="review-manga">{{manga.title}}</div>
                   <div class="review-rating">
-                    {{#each (range rating)}}
+                    {{#times rating}}
                       <span class="star filled">★</span>
-                    {{/each}}
-                    {{#each (range (subtract 5 rating))}}
+                    {{/times}}
+                    {{#times (subtract 5 rating)}}
                       <span class="star">★</span>
-                    {{/each}}
+                    {{/times}}
                   </div>
-                  {{#if comment}}
-                    <div class="review-comment">{{comment}}</div>
-                  {{/if}}
-                  <div class="review-date">{{date}}</div>
+                  <div class="review-text">{{comment}}</div>
+                  <div class="review-date">{{createdAt}}</div>
                 </div>
               {{/each}}
             </div>
           {{else}}
             <div class="empty-state">
               <i class="fas fa-star"></i>
-              <h4>Вы пока не оставили ни одного отзыва</h4>
-              <p>Оставляйте отзывы о прочитанной манге</p>
+              <h4>У вас пока нет отзывов</h4>
+              <p>Оставьте отзыв о приобретенной манге</p>
             </div>
           {{/if}}
         </div>
 
         <div class="tab-content" id="settings">
           <h3>Настройки аккаунта</h3>
-          <div class="settings-section">
-            <h4>Безопасность</h4>
-            <button class="btn btn-outline">Изменить пароль</button>
-          </div>
-          <div class="settings-section">
-            <h4>Уведомления</h4>
-            <label class="checkbox-label">
-              <input type="checkbox" checked>
-              Уведомления о новых поступлениях
-            </label>
-            <label class="checkbox-label">
-              <input type="checkbox" checked>
-              Уведомления о статусе заказа
-            </label>
-          </div>
-          <div class="settings-section">
-            <h4>Аккаунт</h4>
-            <button class="btn btn-danger">Удалить аккаунт</button>
-          </div>
+          <form class="settings-form">
+            <div class="form-group">
+              <label for="notifications">Уведомления по email:</label>
+              <div class="checkbox-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="orderUpdates" checked>
+                  <span class="checkmark"></span>
+                  Уведомления о заказах
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="promoUpdates">
+                  <span class="checkmark"></span>
+                  Акции и скидки
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="newProducts">
+                  <span class="checkmark"></span>
+                  Новые поступления
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="language">Язык интерфейса:</label>
+              <select id="language" class="form-select">
+                <option value="ru" selected>Русский</option>
+                <option value="en">English</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <button type="button" class="btn btn-outline" id="changePasswordBtn">
+                Изменить пароль
+              </button>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Сохранить настройки</button>
+          </form>
         </div>
       </div>
     </div>

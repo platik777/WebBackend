@@ -1,0 +1,482 @@
+.checkout-page {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.checkout-progress {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 2rem 0 3rem;
+    padding: 0 2rem;
+}
+
+.progress-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    flex: 1;
+    max-width: 150px;
+}
+
+.progress-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 60%;
+    right: -60%;
+    height: 2px;
+    background: #e0e0e0;
+    z-index: 1;
+}
+
+.progress-step.active:not(:last-child)::after {
+    background: #667eea;
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e0e0e0;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    position: relative;
+    z-index: 2;
+}
+
+.progress-step.active .step-number {
+    background: #667eea;
+    color: white;
+}
+
+.progress-step span {
+    font-size: 0.9rem;
+    color: #666;
+    text-align: center;
+}
+
+.progress-step.active span {
+    color: #667eea;
+    font-weight: 600;
+}
+
+.checkout-content {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 3rem;
+    align-items: start;
+}
+
+.checkout-form-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.form-section {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.form-section h3 {
+    margin: 0 0 1.5rem 0;
+    color: #2c3e50;
+    border-bottom: 2px solid #f1f3f4;
+    padding-bottom: 0.5rem;
+    font-size: 1.3rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #e9ecef;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.form-group input[readonly] {
+    background-color: #f8f9fa;
+    color: #666;
+}
+
+.form-hint {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+/* Способы оплаты */
+.payment-methods {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.payment-option {
+    display: block;
+    cursor: pointer;
+}
+
+.payment-option input[type="radio"] {
+    display: none;
+}
+
+.payment-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.payment-option input[type="radio"]:checked + .payment-card {
+    border-color: #667eea;
+    background: #f8f9fa;
+}
+
+.payment-card:hover {
+    border-color: #667eea;
+}
+
+.payment-icon {
+    display: flex;
+    gap: 0.5rem;
+    font-size: 1.5rem;
+    color: #666;
+    min-width: 60px;
+}
+
+.payment-info h4 {
+    margin: 0 0 0.25rem 0;
+    color: #2c3e50;
+    font-size: 1rem;
+}
+
+.payment-info p {
+    margin: 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+/* Действия формы */
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.btn-large {
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    position: relative;
+}
+
+.btn-spinner {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.btn-text {
+    transition: opacity 0.3s ease;
+}
+
+.btn:disabled .btn-text {
+    opacity: 0;
+}
+
+/* Сводка заказа */
+.order-summary {
+    position: sticky;
+    top: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.summary-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.summary-card h3 {
+    margin: 0 0 1.5rem 0;
+    color: #2c3e50;
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 0.75rem;
+}
+
+.summary-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 2rem;
+    color: #666;
+}
+
+.order-items {
+    margin-bottom: 1.5rem;
+}
+
+.summary-totals {
+    border-top: 1px solid #e9ecef;
+    padding-top: 1rem;
+}
+
+.summary-line {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+}
+
+.summary-line.total {
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: #2c3e50;
+    border-top: 1px solid #e9ecef;
+    padding-top: 0.75rem;
+    margin-top: 0.75rem;
+}
+
+.delivery-estimate {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+}
+
+.estimate-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.estimate-item:last-child {
+    margin-bottom: 0;
+}
+
+.estimate-item i {
+    color: #667eea;
+}
+
+/* Купон */
+.coupon-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.coupon-card h4 {
+    margin: 0 0 1rem 0;
+    color: #2c3e50;
+}
+
+.coupon-input {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.coupon-input input {
+    flex: 1;
+    padding: 0.75rem;
+    border: 2px solid #e9ecef;
+    border-radius: 6px;
+}
+
+.coupon-input input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.coupon-result {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    border-radius: 6px;
+}
+
+.coupon-result.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.coupon-result.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Модальное окно успеха */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 12px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.success-modal .modal-body {
+    padding: 3rem;
+    text-align: center;
+}
+
+.success-icon {
+    font-size: 4rem;
+    color: #4caf50;
+    margin-bottom: 1.5rem;
+}
+
+.success-modal h3 {
+    margin: 0 0 1rem 0;
+    color: #2c3e50;
+}
+
+.success-modal p {
+    margin: 0 0 1rem 0;
+    color: #666;
+}
+
+.success-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+/* Адаптивность */
+@media (max-width: 968px) {
+    .checkout-content {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+
+    .order-summary {
+        position: static;
+        order: -1;
+    }
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+
+    .form-actions {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .progress-step {
+        flex-direction: column;
+        font-size: 0.8rem;
+    }
+
+    .progress-step:not(:last-child)::after {
+        display: none;
+    }
+
+    .step-number {
+        width: 30px;
+        height: 30px;
+        font-size: 0.9rem;
+    }
+
+    .success-actions {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .checkout-page {
+        padding: 1rem;
+    }
+
+    .form-section {
+        padding: 1rem;
+    }
+
+    .summary-card,
+    .coupon-card {
+        padding: 1rem;
+    }
+
+    .checkout-progress {
+        margin: 1rem 0 2rem;
+        padding: 0 1rem;
+    }
+
+    .payment-card {
+        padding: 0.75rem;
+    }
+
+    .coupon-input {
+        flex-direction: column;
+    }
+}

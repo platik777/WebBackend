@@ -1,8 +1,6 @@
-<!-- Обновленная страница оформления заказа views/checkout.hbs -->
 <div class="checkout-page">
   <h1 class="page-title">Оформление заказа</h1>
 
-  <!-- Прогресс-бар -->
   <div class="checkout-progress">
     <div class="progress-step active">
       <div class="step-number">1</div>
@@ -157,7 +155,6 @@
         <h3>Ваш заказ</h3>
 
         <div class="order-items" id="orderItems">
-          <!-- Товары будут загружены через JavaScript -->
           <div class="summary-loading">
             <i class="fas fa-spinner fa-spin"></i>
             <span>Загрузка...</span>
@@ -191,13 +188,12 @@
         </div>
       </div>
 
-      <!-- Купон на скидку -->
       <div class="coupon-section">
         <div class="coupon-card">
           <h4>Есть промокод?</h4>
           <div class="coupon-input">
             <input type="text" id="couponCode" placeholder="Введите промокод">
-            <button type="button" class="btn btn-outline" onclick="applyCoupon()">
+            <button type="button" class="btn btn-outline" id="applyCouponBtn">
               Применить
             </button>
           </div>
@@ -207,7 +203,6 @@
     </div>
   </div>
 
-  <!-- Модальное окно успешного заказа -->
   <div class="modal" id="successModal" style="display: none;">
     <div class="modal-content success-modal">
       <div class="modal-body">
@@ -218,10 +213,10 @@
         <p>Номер заказа: <strong id="orderNumber"></strong></p>
         <p>На ваш email отправлено подтверждение</p>
         <div class="success-actions">
-          <button class="btn btn-primary" onclick="goToOrderDetails()">
+          <button class="btn btn-primary" id="goToOrderDetailsBtn">
             Посмотреть заказ
           </button>
-          <button class="btn btn-outline" onclick="continueShopping()">
+          <button class="btn btn-outline" id="continueShoppingBtn">
             Продолжить покупки
           </button>
         </div>
@@ -229,278 +224,3 @@
     </div>
   </div>
 </div>
-
-<script>
-  let orderData = null;
-
-  document.addEventListener('DOMContentLoaded', function() {
-    initCheckoutPage();
-  });
-
-  async function initCheckoutPage() {
-    await loadOrderSummary();
-    initFormValidation();
-    setupPaymentMethodHandlers();
-  }
-
-  async function loadOrderSummary() {
-    try {
-      const summary = await getCartSummaryAPI();
-      const cartItems = await getCartAPI();
-
-      if (!summary || cartItems.length === 0) {
-        // Если корзина пуста, перенаправляем на страницу корзины
-        window.location.href = '/cart';
-        return;
-      }
-
-      displayOrderItems(cartItems);
-      updateOrderSummary(summary);
-    } catch (error) {
-      console.error('Error loading order summary:', error);
-      showNotification('Ошибка загрузки заказа', 'error');
-    }
-  }
-
-  function displayOrderItems(items) {
-    const container = document.getElementById('orderItems');
-
-    container.innerHTML = items.map(item => `
-      <div class="order-item">
-        <div class="item-image">
-          <img src="${item.manga.imageUrl || '/images/placeholder.jpg'}" alt="${item.manga.title}">
-        </div>
-        <div class="item-details">
-          <h4>${item.manga.title}</h4>
-          <div class="item-meta">
-            <span class="quantity">×${item.quantity}</span>
-            <span class="price">${formatPrice(item.manga.price)}</span>
-          </div>
-        </div>
-        <div class="item-total">
-          ${formatPrice(item.manga.price * item.quantity)}
-        </div>
-      </div>
-    `).join('');
-  }
-
-  function updateOrderSummary(summary) {
-    document.getElementById('itemsTotal').textContent = formatPrice(summary.availableAmount);
-    document.getElementById('shippingCost').textContent =
-      summary.shippingCost > 0 ? formatPrice(summary.shippingCost) : 'Бесплатно';
-    document.getElementById('totalAmount').textContent = formatPrice(summary.finalAmount);
-
-    // Показываем информацию о доставке
-    const deliveryEstimate = document.getElementById('deliveryEstimate');
-    if (summary.shippingCost === 0) {
-      deliveryEstimate.querySelector('.estimate-item').innerHTML = `
-        <i class="fas fa-truck"></i>
-        <span>Бесплатная доставка: <strong>1-3 рабочих дня</strong></span>
-      `;
-    }
-  }
-
-  function initFormValidation() {
-    const form = document.getElementById('checkoutForm');
-    const submitBtn = form.querySelector('button[type="submit"]');
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      if (!validateForm()) return;
-
-      const formData = new FormData(form);
-      const checkoutData = {
-        email: formData.get('email'),
-        firstName: formData.get('firstName'),
-        lastName: formData.get('lastName'),
-        shippingPhone: formData.get('phone'),
-        shippingAddress: formData.get('address'),
-        shippingCity: formData.get('city'),
-        notes: formData.get('notes'),
-        paymentMethod: formData.get('paymentMethod'),
-      };
-
-      try {
-        submitBtn.disabled = true;
-        submitBtn.querySelector('.btn-text').style.display = 'none';
-        submitBtn.querySelector('.btn-spinner').style.display = 'inline-block';
-
-        orderData = await processCheckout(checkoutData);
-        showSuccessModal(orderData);
-      } catch (error) {
-        // Ошибка уже обработана в processCheckout
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.querySelector('.btn-text').style.display = 'inline';
-        submitBtn.querySelector('.btn-spinner').style.display = 'none';
-      }
-    });
-  }
-
-  function validateForm() {
-    const requiredFields = ['email', 'firstName', 'lastName', 'phone', 'city', 'address'];
-    let isValid = true;
-
-    requiredFields.forEach(fieldName => {
-      const field = document.getElementsByName(fieldName)[0];
-      const value = field.value.trim();
-
-      if (!value) {
-        showFieldError(field, 'Это поле обязательно');
-        isValid = false;
-      } else {
-        clearFieldError(field);
-
-        // Дополнительная валидация для email
-        if (fieldName === 'email' && !isValidEmail(value)) {
-          showFieldError(field, 'Введите корректный email');
-          isValid = false;
-        }
-
-        // Дополнительная валидация для телефона
-        if (fieldName === 'phone' && !isValidPhone(value)) {
-          showFieldError(field, 'Введите корректный номер телефона');
-          isValid = false;
-        }
-      }
-    });
-
-    return isValid;
-  }
-
-  function showFieldError(field, message) {
-    clearFieldError(field);
-    field.classList.add('error');
-
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'field-error';
-    errorDiv.textContent = message;
-    field.parentNode.appendChild(errorDiv);
-  }
-
-  function clearFieldError(field) {
-    field.classList.remove('error');
-    const existingError = field.parentNode.querySelector('.field-error');
-    if (existingError) {
-      existingError.remove();
-    }
-  }
-
-  function isValidEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  }
-
-  function isValidPhone(phone) {
-    const phoneRegex = /^[\+]?[0-9\s\-\(\)]{10,}$/;
-    return phoneRegex.test(phone);
-  }
-
-  function setupPaymentMethodHandlers() {
-    const paymentOptions = document.querySelectorAll('input[name="paymentMethod"]');
-    paymentOptions.forEach(option => {
-      option.addEventListener('change', (e) => {
-        // Можно добавить логику для разных способов оплаты
-        updatePaymentInfo(e.target.value);
-      });
-    });
-  }
-
-  function updatePaymentInfo(method) {
-    // Обновляем информацию в зависимости от выбранного способа оплаты
-    const deliveryEstimate = document.getElementById('deliveryEstimate');
-
-    if (method === 'cash') {
-      // Для наличных может быть другое время доставки
-      deliveryEstimate.innerHTML = `
-        <div class="estimate-item">
-          <i class="fas fa-truck"></i>
-          <span>Доставка: <strong>1-3 рабочих дня</strong></span>
-        </div>
-        <div class="estimate-item">
-          <i class="fas fa-money-bill-wave"></i>
-          <span>Оплата курьеру при получении</span>
-        </div>
-      `;
-    } else {
-      deliveryEstimate.innerHTML = `
-        <div class="estimate-item">
-          <i class="fas fa-truck"></i>
-          <span>Доставка: <strong>1-3 рабочих дня</strong></span>
-        </div>
-        <div class="estimate-item">
-          <i class="fas fa-shield-alt"></i>
-          <span>Гарантия возврата 14 дней</span>
-        </div>
-      `;
-    }
-  }
-
-  async function applyCoupon() {
-    const couponCode = document.getElementById('couponCode').value.trim();
-    const resultDiv = document.getElementById('couponResult');
-
-    if (!couponCode) {
-      showCouponResult('Введите промокод', 'error');
-      return;
-    }
-
-    try {
-      // Здесь можно добавить API для проверки промокодов
-      // const response = await fetch('/api/coupons/validate', { ... });
-
-      // Заглушка для демонстрации
-      if (couponCode.toUpperCase() === 'MANGA10') {
-        showCouponResult('Скидка 10% применена!', 'success');
-        // Обновляем итоговую сумму
-        updateDiscountedTotal(0.1); // 10% скидка
-      } else {
-        showCouponResult('Промокод не найден', 'error');
-      }
-    } catch (error) {
-      showCouponResult('Ошибка при проверке промокода', 'error');
-    }
-  }
-
-  function showCouponResult(message, type) {
-    const resultDiv = document.getElementById('couponResult');
-    resultDiv.className = `coupon-result ${type}`;
-    resultDiv.textContent = message;
-    resultDiv.style.display = 'block';
-  }
-
-  function updateDiscountedTotal(discountPercent) {
-    const totalElement = document.getElementById('totalAmount');
-    const currentTotal = parseFloat(totalElement.textContent.replace(/[^\d]/g, ''));
-    const discountedTotal = currentTotal * (1 - discountPercent);
-
-    totalElement.innerHTML = `
-      <span class="original-price">${formatPrice(currentTotal)}</span>
-      <span class="discounted-price">${formatPrice(discountedTotal)}</span>
-    `;
-  }
-
-  function showSuccessModal(order) {
-    document.getElementById('orderNumber').textContent = order.orderNumber;
-    document.getElementById('successModal').style.display = 'block';
-  }
-
-  function goToOrderDetails() {
-    if (orderData) {
-      window.location.href = `/orders/${orderData.id}`;
-    }
-  }
-
-  function continueShopping() {
-    window.location.href = '/catalog';
-  }
-
-  // Закрытие модального окна при клике вне его
-  window.onclick = function(event) {
-    const modal = document.getElementById('successModal');
-    if (event.target === modal) {
-      goToOrderDetails();
-    }
-  }
-</script>

@@ -1,2 +1,17 @@
+{{!-- Основная логика (должна загружаться первой) --}}
 <script src="/js/main.js" defer></script>
+
+{{!-- Логика корзины (нужна на всех страницах для счетчика) --}}
+<script src="/js/pages/cart.js" defer></script>
+
+{{!-- Страничные скрипты --}}
+{{#if (eq title "Профиль пользователя")}}
+  <script src="/js/pages/profile.js" defer></script>
+{{/if}}
+
+{{#if (eq title "Оформление заказа")}}
+  <script src="/js/pages/checkout.js" defer></script>
+{{/if}}
+
+{{!-- Компоненты (если понадобятся в будущем) --}}
 <script src="/js/components.js" defer></script>

@@ -1,65 +1,28 @@
-document.addEventListener('DOMContentLoaded', function() {
-  console.log('Manga Store initialized');
+// Конфигурация приложения
+const APP_CONFIG = {
+  apiBaseUrl: '/api',
+  cartStorageKey: 'manga-cart',
+  userStorageKey: 'user-profile',
+  settingsStorageKey: 'user-settings'
+};
 
-  initializeCart();
-  initializeFilters();
-  initializeNavigation();
-  initializeProfileTabs();
-  initializeReviewForm();
-  initializeMangaCards();
-  updateCartCounter();
-});
-
-// Initialize manga cards interactions
-function initializeMangaCards() {
-  // Обработка кликов по карточкам (для альтернативного способа перехода)
-  const mangaCards = document.querySelectorAll('.manga-card');
-
-  mangaCards.forEach(card => {
-    // Добавляем курсор pointer для интерактивности
-    card.style.cursor = 'pointer';
-
-    // Переход на детальную страницу при клике на карточку (кроме кнопок)
-    card.addEventListener('click', function(e) {
-      // Проверяем, что клик не по кнопке или ссылке
-      if (!e.target.closest('button') && !e.target.closest('a')) {
-        const mangaId = this.getAttribute('data-manga-id') ||
-          this.querySelector('[data-manga-id]')?.getAttribute('data-manga-id');
-        if (mangaId) {
-          window.location.href = `/manga/${mangaId}`;
-        }
-      }
-    });
-  });
-
-  // Обработка кнопок "Подробнее"
-  const detailButtons = document.querySelectorAll('.manga-detail-btn');
-  detailButtons.forEach(btn => {
-    btn.addEventListener('click', function(e) {
-      e.stopPropagation(); // Предотвращаем всплытие события
-    });
-  });
-}
-
-// API Configuration
-const API_BASE_URL = '';
-
-// API Helper functions
-async function apiRequest(endpoint, options = {}) {
-  const url = `${API_BASE_URL}${endpoint}`;
-  const config = {
+// API функции (базовые заглушки)
+async function apiRequest(url, options = {}) {
+  const defaultOptions = {
     headers: {
       'Content-Type': 'application/json',
       ...options.headers
-    },
-    ...options
+    }
   };
 
   try {
-    const response = await fetch(url, config);
+    const response = await fetch(APP_CONFIG.apiBaseUrl + url, {
+      ...defaultOptions,
+      ...options
+    });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      throw new Error(`API request failed with status: ${response.status}`);
     }
 
     return await response.json();
@@ -69,124 +32,136 @@ async function apiRequest(endpoint, options = {}) {
   }
 }
 
-// Manga API functions
+// API функции для манги
 async function getMangaList(filters = {}) {
-  const queryParams = new URLSearchParams(filters).toString();
-  return apiRequest(`/manga${queryParams ? '?' + queryParams : ''}`);
+  // В реальном приложении здесь был бы запрос к серверу
+  // Возвращаем мок-данные
+  return getMockMangaList(filters);
 }
 
 async function getMangaById(id) {
-  return apiRequest(`/manga/${id}`);
+  // В реальном приложении здесь был бы запрос к серверу
+  const mockData = getMockMangaData(id);
+  return mockData.title ? mockData : null;
 }
 
 async function getFeaturedManga() {
-  return apiRequest('/manga/featured');
+  // Возвращаем первые 6 товаров как рекомендуемые
+  const allManga = getMockMangaList();
+  return allManga.slice(0, 6);
 }
 
-// Reviews API functions
-async function getReviewsByMangaId(mangaId) {
-  return apiRequest(`/reviews/manga/${mangaId}`);
+// Мок-данные для каталога
+function getMockMangaList(filters = {}) {
+  const allManga = [
+    { id: 1, title: 'Наруто', price: 599, imageUrl: '/images/naruto.jpg', inStock: true, author: 'Масаси Кисимото', genre: 'Сёнен', rating: 5 },
+    { id: 2, title: 'Атака титанов', price: 699, imageUrl: '/images/aot.jpg', inStock: true, author: 'Хадзиме Исаяма', genre: 'Сёнен', rating: 5 },
+    { id: 3, title: 'Ван Пис', price: 549, imageUrl: '/images/onepiece.jpg', inStock: false, author: 'Эйитиро Ода', genre: 'Сёнен', rating: 5 },
+    { id: 4, title: 'Моя геройская академия', price: 579, imageUrl: '/images/mha.jpg', inStock: true, author: 'Кохэй Хорикоси', genre: 'Сёнен', rating: 4 },
+    { id: 5, title: 'Берсерк', price: 799, imageUrl: '/images/berserk.jpg', inStock: true, author: 'Кэнтаро Миура', genre: 'Сэйнэн', rating: 5 },
+    { id: 6, title: 'Магическая битва', price: 659, imageUrl: '/images/jjk.jpg', inStock: true, author: 'Гэгэ Акутами', genre: 'Сёнен', rating: 4 },
+    { id: 7, title: 'Убийца демонов', price: 619, imageUrl: '/images/demon-slayer.jpg', inStock: true, author: 'Коёхару Готогэ', genre: 'Сёнен', rating: 4 },
+    { id: 8, title: 'Мобильный воин Гандам', price: 729, imageUrl: '/images/gundam.jpg', inStock: false, author: 'Ёсиюки Томино', genre: 'Меха', rating: 3 }
+  ];
+
+  // Применяем фильтры
+  let filteredManga = allManga;
+
+  if (filters.genre) {
+    filteredManga = filteredManga.filter(manga => manga.genre === filters.genre);
+  }
+
+  if (filters.inStock !== undefined) {
+    filteredManga = filteredManga.filter(manga => manga.inStock === filters.inStock);
+  }
+
+  if (filters.search) {
+    const searchTerm = filters.search.toLowerCase();
+    filteredManga = filteredManga.filter(manga =>
+      manga.title.toLowerCase().includes(searchTerm) ||
+      manga.author.toLowerCase().includes(searchTerm)
+    );
+  }
+
+  return filteredManga;
 }
 
-async function createReview(reviewData) {
-  return apiRequest('/reviews', {
-    method: 'POST',
-    body: JSON.stringify(reviewData)
-  });
+// Мок-данные для одного товара (дублируем из cart.js для независимости)
+function getMockMangaData(id) {
+  const mockData = {
+    1: { title: 'Наруто', price: 599, imageUrl: '/images/naruto.jpg', inStock: true, author: 'Масаси Кисимото', genre: 'Сёнен', rating: 5 },
+    2: { title: 'Атака титанов', price: 699, imageUrl: '/images/aot.jpg', inStock: true, author: 'Хадзиме Исаяма', genre: 'Сёнен', rating: 5 },
+    3: { title: 'Ван Пис', price: 549, imageUrl: '/images/onepiece.jpg', inStock: false, author: 'Эйитиро Ода', genre: 'Сёнен', rating: 5 },
+    4: { title: 'Моя геройская академия', price: 579, imageUrl: '/images/mha.jpg', inStock: true, author: 'Кохэй Хорикоси', genre: 'Сёнен', rating: 4 },
+    5: { title: 'Берсерк', price: 799, imageUrl: '/images/berserk.jpg', inStock: true, author: 'Кэнтаро Миура', genre: 'Сэйнэн', rating: 5 },
+    6: { title: 'Магическая битва', price: 659, imageUrl: '/images/jjk.jpg', inStock: true, author: 'Гэгэ Акутами', genre: 'Сёнен', rating: 4 },
+    7: { title: 'Убийца демонов', price: 619, imageUrl: '/images/demon-slayer.jpg', inStock: true, author: 'Коёхару Готогэ', genre: 'Сёнен', rating: 4 },
+    8: { title: 'Мобильный воин Гандам', price: 729, imageUrl: '/images/gundam.jpg', inStock: false, author: 'Ёсиюки Томино', genre: 'Меха', rating: 3 }
+  };
+
+  return mockData[id] || {
+    title: 'Неизвестная манга',
+    price: 500,
+    imageUrl: '/images/placeholder.jpg',
+    inStock: false,
+    author: 'Неизвестный автор',
+    genre: 'Разное',
+    rating: 0
+  };
 }
 
-// Orders API functions
-async function createOrder(orderData) {
-  return apiRequest('/orders', {
-    method: 'POST',
-    body: JSON.stringify(orderData)
-  });
-}
-
-async function getUserOrders(userId) {
-  return apiRequest(`/orders/user/${userId}`);
-}
-
-// Users API functions
-async function createUser(userData) {
-  return apiRequest('/users', {
-    method: 'POST',
-    body: JSON.stringify(userData)
-  });
-}
-
-async function updateUser(userId, userData) {
-  return apiRequest(`/users/${userId}`, {
-    method: 'PATCH',
-    body: JSON.stringify(userData)
-  });
-}
-
-// Cart functionality
-function initializeCart() {
+// Инициализация кнопок "Добавить в корзину"
+function initializeAddToCartButtons() {
   const addToCartButtons = document.querySelectorAll('.add-to-cart');
 
   addToCartButtons.forEach(button => {
     button.addEventListener('click', function(e) {
       e.preventDefault();
       const mangaId = this.getAttribute('data-manga-id');
-      addToCart(mangaId);
+      const quantity = parseInt(this.getAttribute('data-quantity')) || 1;
+
+      if (window.addToCart) {
+        window.addToCart(mangaId, quantity);
+      } else {
+        console.error('addToCart function not found');
+      }
     });
   });
 }
 
-function addToCart(mangaId) {
-  let cart = JSON.parse(localStorage.getItem('manga-cart') || '[]');
+// Инициализация поиска
+function initializeSearch() {
+  const searchInput = document.querySelector('.search-input');
+  const searchBtn = document.querySelector('.search-btn');
 
-  const existingItem = cart.find(item => item.id === mangaId);
-  if (existingItem) {
-    existingItem.quantity += 1;
-  } else {
-    cart.push({ id: mangaId, quantity: 1 });
+  if (!searchInput) return;
+
+  // Обработчик для кнопки поиска
+  if (searchBtn) {
+    searchBtn.addEventListener('click', performSearch);
   }
 
-  localStorage.setItem('manga-cart', JSON.stringify(cart));
-
-  showNotification('Товар добавлен в корзину!', 'success');
-  updateCartCounter();
+  // Обработчик для Enter в поле поиска
+  searchInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      performSearch();
+    }
+  });
 }
 
-function removeFromCart(mangaId) {
-  let cart = JSON.parse(localStorage.getItem('manga-cart') || '[]');
-  cart = cart.filter(item => item.id !== mangaId);
-  localStorage.setItem('manga-cart', JSON.stringify(cart));
+// Выполнить поиск
+function performSearch() {
+  const searchInput = document.querySelector('.search-input');
+  if (!searchInput) return;
 
-  updateCartCounter();
-  showNotification('Товар удален из корзины', 'info');
-}
-
-function updateCartCounter() {
-  const cart = JSON.parse(localStorage.getItem('manga-cart') || '[]');
-  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-
-  const counter = document.querySelector('.cart-counter');
-  if (counter) {
-    counter.textContent = totalItems;
-    counter.style.display = totalItems > 0 ? 'inline' : 'none';
-  }
-
-  // Обновляем кнопку в корзине
-  const cartButton = document.querySelector('.cart-button');
-  if (cartButton) {
-    cartButton.innerHTML = `
-      <i class="fas fa-shopping-cart"></i>
-      <span class="cart-text">Корзина</span>
-      ${totalItems > 0 ? `<span class="cart-counter">${totalItems}</span>` : ''}
-    `;
+  const searchTerm = searchInput.value.trim();
+  if (searchTerm) {
+    // Перенаправляем на страницу каталога с параметром поиска
+    window.location.href = `/catalog?search=${encodeURIComponent(searchTerm)}`;
   }
 }
 
-function clearCart() {
-  localStorage.removeItem('manga-cart');
-  updateCartCounter();
-}
-
-// Filters functionality
+// Инициализация фильтров каталога
 function initializeFilters() {
   const container = document.getElementById('mangaContainer');
   if (!container) return;
@@ -202,26 +177,50 @@ function initializeFilters() {
       const matchesGenre = !genre || card.dataset.genre?.includes(genre);
       const matchesStock =
         !stock ||
-        (stock === 'in-stock' && card.dataset.stock === '1') ||
-        (stock === 'out-of-stock' && card.dataset.stock === '0');
+        (stock === 'in-stock' && card.dataset.stock === 'true') ||
+        (stock === 'out-of-stock' && card.dataset.stock === 'false');
       return matchesGenre && matchesStock;
     });
 
+    // Сортировка
     if (sort) {
       const [by, order] = sort.split('-');
       filteredCards.sort((a, b) => {
-        let valA = by === 'price' ? parseFloat(a.dataset.price) : a.dataset[by]?.toLowerCase();
-        let valB = by === 'price' ? parseFloat(b.dataset.price) : b.dataset[by]?.toLowerCase();
+        let valA, valB;
+
+        switch(by) {
+          case 'price':
+            valA = parseFloat(a.dataset.price) || 0;
+            valB = parseFloat(b.dataset.price) || 0;
+            break;
+          case 'title':
+            valA = a.dataset.title?.toLowerCase() || '';
+            valB = b.dataset.title?.toLowerCase() || '';
+            break;
+          case 'rating':
+            valA = parseFloat(a.dataset.rating) || 0;
+            valB = parseFloat(b.dataset.rating) || 0;
+            break;
+          default:
+            return 0;
+        }
+
         if (valA < valB) return order === 'asc' ? -1 : 1;
         if (valA > valB) return order === 'asc' ? 1 : -1;
         return 0;
       });
     }
 
-    cards.forEach(card => card.classList.add('hidden'));
-    filteredCards.forEach(card => card.classList.remove('hidden'));
+    // Скрываем все карточки
+    cards.forEach(card => {
+      card.style.display = 'none';
+    });
 
-    filteredCards.forEach(card => container.appendChild(card));
+    // Показываем отфильтрованные карточки
+    filteredCards.forEach(card => {
+      card.style.display = 'block';
+      container.appendChild(card); // Перемещаем в конец для правильного порядка
+    });
 
     updateFilterResults(filteredCards.length);
   }
@@ -245,6 +244,7 @@ function initializeFilters() {
     }
   }
 
+  // Навешиваем обработчики на фильтры
   ['genreFilter', 'stockFilter', 'sortFilter'].forEach(id => {
     const element = document.getElementById(id);
     if (element) {
@@ -252,356 +252,75 @@ function initializeFilters() {
     }
   });
 
+  // Применяем фильтры при загрузке
   applyFiltersAndSort();
 }
 
+// Очистить фильтры
 function clearFilters() {
   ['genreFilter', 'stockFilter', 'sortFilter'].forEach(id => {
     const element = document.getElementById(id);
-    if (element) element.value = '';
-  });
-
-  const container = document.getElementById('mangaContainer');
-  if (container) {
-    const cards = container.querySelectorAll('.manga-card');
-    cards.forEach(card => card.classList.remove('hidden'));
-
-    // Удаляем все сообщения о результатах фильтрации
-    const filterResults = document.querySelectorAll('.filter-results');
-    filterResults.forEach(result => result.remove());
-  }
-}
-
-// Navigation functionality
-function initializeNavigation() {
-  const currentPath = window.location.pathname;
-  const navLinks = document.querySelectorAll('.nav-link');
-
-  navLinks.forEach(link => {
-    if (link.getAttribute('href') === currentPath) {
-      link.style.backgroundColor = 'rgba(255,255,255,0.2)';
+    if (element) {
+      element.value = '';
     }
   });
 
-  // Mobile menu toggle
-  const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
-  const mainNav = document.querySelector('.main-nav');
-
-  if (mobileMenuToggle && mainNav) {
-    mobileMenuToggle.addEventListener('click', () => {
-      mainNav.classList.toggle('active');
-    });
+  // Перезапускаем фильтрацию
+  if (window.initializeFilters) {
+    initializeFilters();
   }
 }
 
-// Profile tabs functionality
-function initializeProfileTabs() {
-  const navTabs = document.querySelectorAll('.nav-tab');
-  const tabContents = document.querySelectorAll('.tab-content');
+// Отображение ошибок
+function handleGlobalError(error) {
+  console.error('Global error:', error);
 
-  navTabs.forEach(tab => {
-    tab.addEventListener('click', function(e) {
-      e.preventDefault();
-
-      const targetTab = this.getAttribute('data-tab');
-
-      // Remove active class from all tabs and contents
-      navTabs.forEach(t => t.classList.remove('active'));
-      tabContents.forEach(content => content.classList.remove('active'));
-
-      // Add active class to clicked tab and corresponding content
-      this.classList.add('active');
-      const targetContent = document.getElementById(targetTab);
-      if (targetContent) {
-        targetContent.classList.add('active');
-      }
-    });
-  });
-}
-
-// Review form functionality
-function initializeReviewForm() {
-  const reviewForm = document.getElementById('reviewForm');
-  if (!reviewForm) return;
-
-  reviewForm.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    await submitReview();
-  });
-}
-
-async function submitReview() {
-  const form = document.getElementById('reviewForm');
-  const formData = new FormData(form);
-
-  const reviewData = {
-    rating: parseInt(formData.get('rating')),
-    comment: formData.get('comment') || null,
-    userId: getCurrentUserId(), // Нужно получать из сессии/токена
-    mangaId: getMangaIdFromPage()
-  };
-
-  if (!reviewData.rating) {
-    showNotification('Пожалуйста, поставьте оценку', 'error');
-    return;
-  }
-
-  try {
-    await createReview(reviewData);
-    showNotification('Отзыв добавлен!', 'success');
-    form.reset();
-    // Обновить список отзывов
-    await loadReviews(reviewData.mangaId);
-  } catch (error) {
-    showNotification('Ошибка при добавлении отзыва', 'error');
-  }
-}
-
-// User authentication helpers
-function getCurrentUserId() {
-  const user = JSON.parse(localStorage.getItem('mangastore_user') || '{}');
-  return user.id || null;
-}
-
-function getCurrentUser() {
-  return JSON.parse(localStorage.getItem('mangastore_user') || 'null');
-}
-
-function isAuthenticated() {
-  return getCurrentUser() !== null;
-}
-
-function logout() {
-  localStorage.removeItem('mangastore_user');
-  showNotification('Вы вышли из системы', 'info');
-  setTimeout(() => {
-    window.location.href = '/';
-  }, 1000);
-}
-
-// Utility functions
-function getMangaIdFromPage() {
-  const pathParts = window.location.pathname.split('/');
-  if (pathParts[1] === 'manga' && pathParts[2]) {
-    return parseInt(pathParts[2]);
-  }
-  return null;
-}
-
-function formatPrice(price) {
-  return new Intl.NumberFormat('ru-RU', {
-    style: 'currency',
-    currency: 'RUB',
-    minimumFractionDigits: 0
-  }).format(price);
-}
-
-function formatDate(date) {
-  return new Date(date).toLocaleDateString('ru-RU', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
-}
-
-// Load reviews for manga detail page
-async function loadReviews(mangaId) {
-  try {
-    const reviews = await getReviewsByMangaId(mangaId);
-    updateReviewsDisplay(reviews);
-  } catch (error) {
-    console.error('Failed to load reviews:', error);
-  }
-}
-
-function updateReviewsDisplay(reviews) {
-  const reviewsList = document.querySelector('.reviews-list');
-  if (!reviewsList) return;
-
-  if (reviews.length === 0) {
-    reviewsList.innerHTML = `
-      <div class="no-reviews">
-        <p>Пока нет отзывов на эту мангу. Будьте первым!</p>
-      </div>
-    `;
-    return;
-  }
-
-  reviewsList.innerHTML = reviews.map(review => `
-    <div class="review-item">
-      <div class="review-header">
-        <div class="review-author">${review.user.firstName} ${review.user.lastName}</div>
-        <div class="review-rating">
-          ${generateStars(review.rating)}
-        </div>
-        <div class="review-date">${formatDate(review.createdAt)}</div>
-      </div>
-      ${review.comment ? `<div class="review-comment">${review.comment}</div>` : ''}
-    </div>
-  `).join('');
-}
-
-function generateStars(rating) {
-  let stars = '';
-  for (let i = 1; i <= 5; i++) {
-    if (i <= rating) {
-      stars += '<span class="star filled">★</span>';
-    } else {
-      stars += '<span class="star">★</span>';
-    }
-  }
-  return stars;
-}
-
-// Notification system
-function showNotification(message, type = 'info') {
   const notification = document.createElement('div');
-  notification.className = `notification notification-${type}`;
+  notification.className = 'notification notification-error';
   notification.innerHTML = `
-    <div class="notification-content">
-      <span class="notification-message">${message}</span>
-      <button class="notification-close">&times;</button>
-    </div>
+    <span>Произошла ошибка. Попробуйте обновить страницу.</span>
+    <button onclick="this.parentElement.remove()">&times;</button>
   `;
 
   document.body.appendChild(notification);
 
-  // Auto-remove after 5 seconds
   setTimeout(() => {
-    if (notification.parentNode) {
-      notification.parentNode.removeChild(notification);
+    if (notification.parentElement) {
+      notification.remove();
     }
   }, 5000);
-
-  // Manual close
-  const closeBtn = notification.querySelector('.notification-close');
-  closeBtn.addEventListener('click', () => {
-    if (notification.parentNode) {
-      notification.parentNode.removeChild(notification);
-    }
-  });
 }
 
-// Search functionality
-function initializeSearch() {
-  const searchInput = document.querySelector('.search-input');
-  const searchBtn = document.querySelector('.search-btn');
-
-  if (searchInput && searchBtn) {
-    searchBtn.addEventListener('click', performSearch);
-    searchInput.addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        performSearch();
-      }
-    });
-  }
-}
-
-function performSearch() {
-  const searchInput = document.querySelector('.search-input');
-  const query = searchInput?.value.trim();
-
-  if (!query) {
-    showNotification('Введите поисковый запрос', 'warning');
-    return;
+// Инициализация приложения
+function initializeApp() {
+  // Инициализируем корзину
+  if (window.updateCartCounter) {
+    updateCartCounter();
   }
 
-  window.location.href = `/catalog?search=${encodeURIComponent(query)}`;
-}
+  // Инициализируем кнопки добавления в корзину
+  initializeAddToCartButtons();
 
-// Wishlist functionality
-function toggleWishlist(mangaId) {
-  if (!isAuthenticated()) {
-    showNotification('Войдите в систему, чтобы добавить в избранное', 'warning');
-    return;
-  }
-
-  let wishlist = JSON.parse(localStorage.getItem('manga-wishlist') || '[]');
-
-  if (wishlist.includes(mangaId)) {
-    wishlist = wishlist.filter(id => id !== mangaId);
-    showNotification('Удалено из избранного', 'info');
-  } else {
-    wishlist.push(mangaId);
-    showNotification('Добавлено в избранное', 'success');
-  }
-
-  localStorage.setItem('manga-wishlist', JSON.stringify(wishlist));
-  updateWishlistButton(mangaId);
-}
-
-function updateWishlistButton(mangaId) {
-  const wishlist = JSON.parse(localStorage.getItem('manga-wishlist') || '[]');
-  const wishlistBtn = document.querySelector(`[data-manga-id="${mangaId}"].wishlist-btn`);
-
-  if (wishlistBtn) {
-    if (wishlist.includes(mangaId)) {
-      wishlistBtn.classList.add('active');
-      wishlistBtn.innerHTML = '<i class="fas fa-heart"></i> В избранном';
-    } else {
-      wishlistBtn.classList.remove('active');
-      wishlistBtn.innerHTML = '<i class="far fa-heart"></i> В избранное';
-    }
-  }
-}
-
-// Initialize wishlist buttons on page load
-document.addEventListener('DOMContentLoaded', function() {
-  const wishlistBtns = document.querySelectorAll('.wishlist-btn');
-  wishlistBtns.forEach(btn => {
-    const mangaId = btn.getAttribute('data-manga-id');
-    updateWishlistButton(mangaId);
-    btn.addEventListener('click', () => toggleWishlist(mangaId));
-  });
-});
-
-// Lazy loading for images
-function initializeLazyLoading() {
-  const images = document.querySelectorAll('img[loading="lazy"]');
-
-  if ('IntersectionObserver' in window) {
-    const imageObserver = new IntersectionObserver((entries, observer) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const img = entry.target;
-          img.src = img.dataset.src || img.src;
-          img.classList.remove('lazy');
-          observer.unobserve(img);
-        }
-      });
-    });
-
-    images.forEach(img => imageObserver.observe(img));
-  }
-}
-
-// Initialize everything when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
+  // Инициализируем поиск
   initializeSearch();
-  initializeLazyLoading();
 
-  // Load manga data if on detail page
-  const mangaId = getMangaIdFromPage();
-  if (mangaId) {
-    loadReviews(mangaId);
+  // Инициализируем фильтры, если мы на странице каталога
+  if (window.location.pathname === '/catalog') {
+    initializeFilters();
   }
-});
 
-// Global error handler
-window.addEventListener('error', function(e) {
-  console.error('Global error:', e.error);
-  showNotification('Произошла ошибка. Попробуйте обновить страницу.', 'error');
-});
-
-// Service Worker registration for PWA features
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', function() {
-    navigator.serviceWorker.register('/sw.js')
-      .then(function(registration) {
-        console.log('SW registered: ', registration);
-      })
-      .catch(function(registrationError) {
-        console.log('SW registration failed: ', registrationError);
-      });
+  // Обработчик глобальных ошибок
+  window.addEventListener('error', handleGlobalError);
+  window.addEventListener('unhandledrejection', (e) => {
+    handleGlobalError(e.reason);
   });
 }
+
+// Инициализация при загрузке DOM
+document.addEventListener('DOMContentLoaded', initializeApp);
+
+// Экспорт функций для использования в других файлах
+window.getMockMangaData = getMockMangaData;
+window.getMockMangaList = getMockMangaList;
+window.clearFilters = clearFilters;
+window.performSearch = performSearch;
