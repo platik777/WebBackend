@@ -67,11 +67,8 @@ export class AppController {
     @Query('auth') isAuthenticated?: string,
     @Query() queryParams?: any,
   ) {
-    // Преобразуем query параметры в формат для MangaService
-    const filters = this.parseFiltersFromQuery(queryParams);
-
     // Получаем мангу с фильтрами из базы данных
-    const mangas = await this.mangaService.findAll(filters);
+    const mangas = await this.mangaService.findAll();
 
     return {
       title: 'Каталог манги',
@@ -296,53 +293,5 @@ export class AppController {
     return {
       title: 'Регистрация',
     };
-  }
-
-  /**
-   * Преобразует query параметры в формат фильтров для MangaService
-   */
-  private parseFiltersFromQuery(queryParams: any): any {
-    if (!queryParams) return {};
-
-    const filters: any = {};
-
-    // Фильтр по жанру
-    if (queryParams.genre && queryParams.genre.trim()) {
-      filters.genre = queryParams.genre.trim();
-    }
-
-    // Фильтр по автору
-    if (queryParams.author && queryParams.author.trim()) {
-      filters.author = queryParams.author.trim();
-    }
-
-    // Фильтр по наличию
-    if (queryParams.inStock) {
-      if (queryParams.inStock === 'in-stock') {
-        filters.inStock = true;
-      } else if (queryParams.inStock === 'out-of-stock') {
-        filters.inStock = false;
-      }
-    }
-
-    // Фильтры по цене
-    if (queryParams.priceMin && !isNaN(parseFloat(queryParams.priceMin))) {
-      filters.priceMin = parseFloat(queryParams.priceMin);
-    }
-    if (queryParams.priceMax && !isNaN(parseFloat(queryParams.priceMax))) {
-      filters.priceMax = parseFloat(queryParams.priceMax);
-    }
-
-    // Поиск
-    if (queryParams.search && queryParams.search.trim()) {
-      filters.search = queryParams.search.trim();
-    }
-
-    // Сортировка
-    if (queryParams.sort && queryParams.sort.trim()) {
-      filters.sort = queryParams.sort.trim();
-    }
-
-    return filters;
   }
 }

@@ -69,26 +69,4 @@ export class UsersService {
       data: { isActive: false },
     });
   }
-
-  async validateUser(email: string, password: string): Promise<User | null> {
-    const user = await this.findByEmail(email);
-
-    if (user && (await bcrypt.compare(password, user.password))) {
-      return user;
-    }
-
-    return null;
-  }
-
-  async getUsersCount(): Promise<number> {
-    return this.prisma.user.count({
-      where: { isActive: true },
-    });
-  }
-
-  async getAdminsCount(): Promise<number> {
-    return this.prisma.user.count({
-      where: { isAdmin: true, isActive: true },
-    });
-  }
 }

@@ -4,17 +4,15 @@ import { ConfigService } from '@nestjs/config';
 import { join } from 'path';
 import { readFileSync } from 'fs';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { ValidationPipe } from '@nestjs/common';
 import * as hbs from 'hbs';
 import { NextFunction, Request } from 'express';
 import { IResponseWithLayout } from './common/interfaces/IResponseWithLayout';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const configService = app.get(ConfigService);
 
-  // Настройка статических файлов и представлений
   app.useStaticAssets(join(process.cwd(), 'public'), {
     prefix: '/',
   });
@@ -24,13 +22,6 @@ async function bootstrap() {
   });
   app.setBaseViewsDir(join(process.cwd(), 'views'));
   app.setViewEngine('hbs');
-
-  // Настройка валидации
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-    transform: true,
-  }));
 
   const config = new DocumentBuilder()
     .setTitle('Manga Store API')
@@ -58,7 +49,6 @@ async function bootstrap() {
     },
   });
 
-  // Настройка Handlebars
   hbs.registerPartials(join(process.cwd(), 'views', 'partials'));
 
   const mangaCardPartial = readFileSync(
@@ -74,6 +64,7 @@ async function bootstrap() {
   hbs.registerPartial('user-info', userInfoPartial);
 
   hbs.registerHelper('eq', (a: any, b: any) => a === b);
+
   hbs.registerHelper('range', function (n: number) {
     const result: number[] = [];
     for (let i = 0; i < n; i++) {
@@ -81,12 +72,15 @@ async function bootstrap() {
     }
     return result;
   });
+
   hbs.registerHelper('subtract', function (a: number, b: number) {
     return a - b;
   });
+
   hbs.registerHelper('json', function (context: any) {
     return JSON.stringify(context);
   });
+
   hbs.registerHelper('formatDate', function (date: Date | string) {
     if (!date) return '';
     return new Date(date).toLocaleDateString('ru-RU', {
@@ -95,6 +89,7 @@ async function bootstrap() {
       day: 'numeric',
     });
   });
+
   hbs.registerHelper('formatPrice', function (price: number) {
     return new Intl.NumberFormat('ru-RU', {
       style: 'currency',
@@ -102,6 +97,7 @@ async function bootstrap() {
       minimumFractionDigits: 0,
     }).format(price);
   });
+
   hbs.registerHelper('statusText', function (status: string) {
     const statusTexts: Record<string, string> = {
       PENDING: 'Ожидает обработки',
@@ -113,15 +109,96 @@ async function bootstrap() {
     return statusTexts[status] || status;
   });
 
-  app.use('/layout', (req: Request, res: IResponseWithLayout, next: NextFunction) => {
-    res.locals.layout = 'main';
+  hbs.registerHelper('if_eq', function (a: any, b: any, options: any) {
+    if (a === b) {
+      return options.fn(this);
+    }
+    return options.inverse(this);
+  });
+
+  hbs.registerHelper('unless_eq', function (a: any, b: any, options: any) {
+    if (a !== b) {
+      return options.fn(this);
+    }
+    return options.inverse(this);
+  });
+
+  hbs.registerHelper('times', function (n: number, options: any) {
+    let result = '';
+    for (let i = 0; i < n; i++) {
+      result += options.fn(i);
+    }
+    return result;
+  });
+
+  hbs.registerHelper('stars', function (rating: number) {
+    let stars = '';
+    for (let i = 1; i <= 5; i++) {
+      if (i <= rating) {
+        stars += '<span class="star filled">★</span>';
+      } else {
+        stars += '<span class="star">★</span>';
+      }
+    }
+    return new (hbs as any).SafeString(stars);
+  });
+
+  hbs.registerHelper('truncate', function (str: string, length: number) {
+    if (!str || str.length <= length) return str;
+    return str.substring(0, length) + '...';
+  });
+
+  hbs.registerHelper(
+    'pluralize',
+    function (count: number, singular: string, plural: string) {
+      return count === 1 ? singular : plural;
+    },
+  );
+
+  hbs.registerHelper(
+    'ifCond',
+    function (v1: any, operator: string, v2: any, options: any) {
+      switch (operator) {
+        case '==':
+          return v1 == v2 ? options.fn(this) : options.inverse(this);
+        case '===':
+          return v1 === v2 ? options.fn(this) : options.inverse(this);
+        case '!=':
+          return v1 != v2 ? options.fn(this) : options.inverse(this);
+        case '!==':
+          return v1 !== v2 ? options.fn(this) : options.inverse(this);
+        case '<':
+          return v1 < v2 ? options.fn(this) : options.inverse(this);
+        case '<=':
+          return v1 <= v2 ? options.fn(this) : options.inverse(this);
+        case '>':
+          return v1 > v2 ? options.fn(this) : options.inverse(this);
+        case '>=':
+          return v1 >= v2 ? options.fn(this) : options.inverse(this);
+        case '&&':
+          return v1 && v2 ? options.fn(this) : options.inverse(this);
+        case '||':
+          return v1 || v2 ? options.fn(this) : options.inverse(this);
+        default:
+          return options.inverse(this);
+      }
+    },
+  );
+
+  app.use((req: Request, res: IResponseWithLayout, next: NextFunction) => {
+    res.locals.layout = 'layouts/layout';
     next();
   });
 
-  const port = configService.get('PORT') || 3000;
-  await app.listen(port);
+  app.set('view options', {
+    extension: 'hbs',
+    map: { html: 'hbs' },
+  });
 
-  console.log(`Приложение запущено на порту ${port}`);
-  console.log(`Swagger документация: http://localhost:${port}/api/docs`);
+  const port = configService.get<number>('PORT', 3000);
+  await app.listen(port, () => {
+    console.log('App start at port: ', port);
+  });
 }
+
 bootstrap();

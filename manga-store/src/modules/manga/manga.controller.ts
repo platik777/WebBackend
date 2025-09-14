@@ -14,7 +14,7 @@ import { MangaService } from './manga.service';
 import { CreateMangaDto } from './dto/create-manga.dto';
 import { UpdateMangaDto } from './dto/update-manga.dto';
 
-@Controller('manga')
+@Controller()
 export class MangaController {
   constructor(private readonly mangaService: MangaService) {}
 
@@ -31,11 +31,6 @@ export class MangaController {
   @Get('featured')
   async findFeatured() {
     return this.mangaService.findFeatured();
-  }
-
-  @Get('stats')
-  async getStats() {
-    return this.mangaService.getMangaStats();
   }
 
   @Get(':id')

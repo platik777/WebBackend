@@ -77,13 +77,4 @@ export class UsersController {
       throw new NotFoundException('Пользователь не найден');
     }
   }
-
-  @Get('stats/count')
-  async getStats() {
-    const usersCount = await this.usersService.getUsersCount();
-
-    return {
-      totalUsers: usersCount,
-    };
-  }
 }
