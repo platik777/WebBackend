@@ -1,332 +1,92 @@
-let orderData = null;
+// Интегрированная версия checkout.js с реальными API вызовами
 
-// Загрузить товары для оформления заказа
+let orderData = [];
+
+// Загрузка товаров в заказе при загрузке страницы
 function loadOrderItems() {
   const cart = getCart();
-  const orderItemsContainer = document.getElementById('orderItems');
 
-  if (cart.length === 0) {
-    window.location.href = '/cart';
+  if (!cart || cart.length === 0) {
+    showEmptyCart();
     return;
   }
 
-  if (!orderItemsContainer) return;
-
-  // Получаем детали товаров из мок-данных
-  const itemsWithDetails = cart.map(item => {
-    const details = getMockMangaData(item.id);
+  orderData = cart.map(cartItem => {
+    const mockData = getMockMangaData(cartItem.id);
     return {
-      ...item,
-      ...details
+      id: cartItem.id,
+      quantity: cartItem.quantity,
+      title: mockData.title,
+      author: mockData.author,
+      price: mockData.price,
+      image: mockData.imageUrl,
+      total: mockData.price * cartItem.quantity
     };
   });
 
-  // Фильтруем только доступные товары
-  const availableItems = itemsWithDetails.filter(item => item.inStock);
+  renderOrderItems();
+  updateOrderSummary();
+}
 
-  if (availableItems.length === 0) {
-    showCheckoutNotification('В корзине нет доступных товаров', 'error');
-    setTimeout(() => {
-      window.location.href = '/cart';
-    }, 2000);
-    return;
-  }
+// Отображение товаров в заказе
+function renderOrderItems() {
+  const container = document.getElementById('orderItems');
+  if (!container) return;
 
-  // Рендерим товары
-  orderItemsContainer.innerHTML = availableItems.map(item => `
+  container.innerHTML = orderData.map(item => `
     <div class="order-item">
-      <img src="${item.imageUrl}" alt="${item.title}" class="order-item-image">
-      <div class="order-item-details">
-        <h4>${item.title}</h4>
-        <p>Количество: ${item.quantity}</p>
-        <p class="order-item-price">${formatPrice(item.price * item.quantity)}</p>
+      <img src="${item.image}" alt="${item.title}" class="item-image">
+      <div class="item-details">
+        <div class="item-title">${item.title}</div>
+        <div class="item-author">${item.author}</div>
+        <div class="item-quantity">Количество: ${item.quantity}</div>
       </div>
+      <div class="item-price">${formatPrice(item.total)}</div>
     </div>
   `).join('');
-
-  // Обновляем итоги
-  updateOrderTotals(availableItems);
-
-  // Сохраняем данные для заказа
-  orderData = availableItems;
 }
 
-// Обновить итоги заказа
-function updateOrderTotals(items) {
-  const itemsTotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const shippingCost = itemsTotal >= 1000 ? 0 : 200;
-  const totalAmount = itemsTotal + shippingCost;
+// Обновление сводки заказа
+function updateOrderSummary() {
+  const subtotal = orderData.reduce((sum, item) => sum + item.total, 0);
+  const shipping = subtotal >= 1000 ? 0 : 300;
+  const total = subtotal + shipping;
 
-  const elements = {
-    itemsTotal: document.getElementById('itemsTotal'),
-    shippingCost: document.getElementById('shippingCost'),
-    totalAmount: document.getElementById('totalAmount')
-  };
+  const subtotalEl = document.getElementById('subtotal');
+  const shippingEl = document.getElementById('shipping');
+  const totalEl = document.getElementById('total');
 
-  if (elements.itemsTotal) {
-    elements.itemsTotal.textContent = formatPrice(itemsTotal);
-  }
-
-  if (elements.shippingCost) {
-    elements.shippingCost.textContent = shippingCost === 0 ? 'Бесплатно' : formatPrice(shippingCost);
-  }
-
-  if (elements.totalAmount) {
-    elements.totalAmount.textContent = formatPrice(totalAmount);
-  }
+  if (subtotalEl) subtotalEl.textContent = formatPrice(subtotal);
+  if (shippingEl) shippingEl.textContent = shipping === 0 ? 'Бесплатно' : formatPrice(shipping);
+  if (totalEl) totalEl.textContent = formatPrice(total);
 }
 
-// Применить промокод
-function applyCoupon() {
-  const couponInput = document.getElementById('couponCode');
-  const couponResult = document.getElementById('couponResult');
-  const couponCode = couponInput.value.trim().toUpperCase();
+// Показать пустую корзину
+function showEmptyCart() {
+  const container = document.getElementById('orderItems');
+  if (!container) return;
 
-  if (!couponCode) {
-    showCouponResult('Введите промокод', 'error');
-    return;
-  }
-
-  // Мок-промокоды для демонстрации
-  const validCoupons = {
-    'MANGA10': { discount: 10, type: 'percent' },
-    'WELCOME': { discount: 100, type: 'fixed' },
-    'SAVE20': { discount: 20, type: 'percent' }
-  };
-
-  const coupon = validCoupons[couponCode];
-
-  if (coupon) {
-    const discountText = coupon.type === 'percent'
-      ? `${coupon.discount}%`
-      : `${coupon.discount} ₽`;
-
-    showCouponResult(`Промокод применен! Скидка: ${discountText}`, 'success');
-
-    // В реальном приложении здесь бы пересчитывались итоги с учетом скидки
-    // updateOrderTotals(orderData, coupon);
-  } else {
-    showCouponResult('Неверный промокод', 'error');
-  }
-}
-
-// Показать результат применения купона
-function showCouponResult(message, type) {
-  const couponResult = document.getElementById('couponResult');
-  if (!couponResult) return;
-
-  couponResult.innerHTML = message;
-  couponResult.className = `coupon-result ${type}`;
-  couponResult.style.display = 'block';
-}
-
-// Валидация формы
-function validateCheckoutForm(formData) {
-  const errors = [];
-
-  // Проверяем обязательные поля
-  if (!formData.get('email')) {
-    errors.push('Email обязателен для заполнения');
-  } else if (!isValidEmail(formData.get('email'))) {
-    errors.push('Введите корректный email');
-  }
-
-  if (!formData.get('firstName')) {
-    errors.push('Имя обязательно для заполнения');
-  }
-
-  if (!formData.get('lastName')) {
-    errors.push('Фамилия обязательна для заполнения');
-  }
-
-  if (!formData.get('phone')) {
-    errors.push('Телефон обязателен для заполнения');
-  }
-
-  if (!formData.get('city')) {
-    errors.push('Город обязателен для заполнения');
-  }
-
-  if (!formData.get('address')) {
-    errors.push('Адрес обязателен для заполнения');
-  }
-
-  return errors;
-}
-
-// Проверка корректности email
-function isValidEmail(email) {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-}
-
-// Обработать оформление заказа
-function processOrder(formData) {
-  const orderDetails = {
-    items: orderData,
-    customer: {
-      email: formData.get('email'),
-      firstName: formData.get('firstName'),
-      lastName: formData.get('lastName'),
-      phone: formData.get('phone')
-    },
-    shipping: {
-      city: formData.get('city'),
-      address: formData.get('address'),
-      postalCode: formData.get('postalCode'),
-      floor: formData.get('floor')
-    },
-    payment: {
-      method: formData.get('paymentMethod')
-    },
-    notes: formData.get('notes'),
-    createdAt: new Date().toISOString(),
-    orderId: generateOrderId()
-  };
-
-  // В реальном приложении здесь был бы запрос к серверу
-  // Сохраняем в localStorage для демонстрации
-  const orders = JSON.parse(localStorage.getItem('user-orders') || '[]');
-  orders.push(orderDetails);
-  localStorage.setItem('user-orders', JSON.stringify(orders));
-
-  return orderDetails;
-}
-
-// Генерация ID заказа
-function generateOrderId() {
-  return 'ORDER-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5).toUpperCase();
-}
-
-// Показать модальное окно успешного заказа
-function showSuccessModal(orderDetails) {
-  const modal = document.getElementById('successModal');
-  const orderNumberElement = document.getElementById('orderNumber');
-
-  if (orderNumberElement) {
-    orderNumberElement.textContent = orderDetails.orderId;
-  }
-
-  if (modal) {
-    modal.style.display = 'flex';
-  }
-}
-
-// Перейти к деталям заказа
-function goToOrderDetails() {
-  // В реальном приложении здесь был бы переход к странице заказа
-  showCheckoutNotification('Переход к деталям заказа...', 'info');
-  setTimeout(() => {
-    window.location.href = '/orders';
-  }, 1000);
-}
-
-// Продолжить покупки
-function continueShopping() {
-  window.location.href = '/catalog';
-}
-
-// Показать уведомление на странице checkout
-function showCheckoutNotification(message, type = 'info') {
-  const existingNotifications = document.querySelectorAll('.checkout-notification');
-  existingNotifications.forEach(notification => notification.remove());
-
-  const notification = document.createElement('div');
-  notification.className = `checkout-notification notification-${type}`;
-  notification.innerHTML = `
-    <span>${message}</span>
-    <button onclick="this.parentElement.remove()">&times;</button>
+  container.innerHTML = `
+    <div class="empty-order">
+      <i class="fas fa-shopping-cart"></i>
+      <h3>Корзина пуста</h3>
+      <p>Добавьте товары для оформления заказа</p>
+      <a href="/catalog" class="btn btn-primary">Перейти в каталог</a>
+    </div>
   `;
 
-  const checkoutPage = document.querySelector('.checkout-page');
-  if (checkoutPage) {
-    checkoutPage.insertBefore(notification, checkoutPage.firstChild);
-  } else {
-    document.body.appendChild(notification);
-  }
-
-  setTimeout(() => {
-    if (notification.parentElement) {
-      notification.remove();
-    }
-  }, 5000);
+  const submitBtn = document.getElementById('submitOrder');
+  if (submitBtn) submitBtn.disabled = true;
 }
 
-// Маска для поля телефона
-function applyPhoneMask(input) {
-  let value = input.value.replace(/\D/g, '');
-
-  if (value.startsWith('8')) {
-    value = '7' + value.substring(1);
-  }
-
-  if (value.startsWith('7')) {
-    value = value.substring(0, 11);
-    const formatted = value.replace(/(\d{1})(\d{3})(\d{3})(\d{2})(\d{2})/, '+$1 ($2) $3-$4-$5');
-    input.value = formatted;
-  } else if (value.length > 0) {
-    input.value = '+7 (' + value;
-  }
-}
-
-// Инициализация формы
+// Инициализация формы оформления заказа
 function initializeCheckoutForm() {
-  const checkoutForm = document.getElementById('checkoutForm');
-  if (!checkoutForm) return;
+  const form = document.getElementById('checkoutForm');
+  if (!form) return;
 
-  // Обработчик отправки формы
-  checkoutForm.addEventListener('submit', async (e) => {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
-
-    const submitBtn = checkoutForm.querySelector('button[type="submit"]');
-    const btnText = submitBtn.querySelector('.btn-text');
-    const btnSpinner = submitBtn.querySelector('.btn-spinner');
-
-    // Показываем загрузку
-    if (btnText) btnText.style.opacity = '0';
-    if (btnSpinner) btnSpinner.style.display = 'block';
-    submitBtn.disabled = true;
-
-    try {
-      const formData = new FormData(checkoutForm);
-
-      // Валидация
-      const errors = validateCheckoutForm(formData);
-      if (errors.length > 0) {
-        showCheckoutNotification(errors.join('\n'), 'error');
-        return;
-      }
-
-      // Проверяем наличие товаров
-      if (!orderData || orderData.length === 0) {
-        showCheckoutNotification('Корзина пуста', 'error');
-        return;
-      }
-
-      // Имитируем задержку обработки
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // Обрабатываем заказ
-      const orderDetails = processOrder(formData);
-
-      // Очищаем корзину
-      localStorage.removeItem('manga-cart');
-      if (window.updateCartCounter) {
-        updateCartCounter();
-      }
-
-      // Показываем успешное сообщение
-      showSuccessModal(orderDetails);
-
-    } catch (error) {
-      console.error('Ошибка оформления заказа:', error);
-      showCheckoutNotification('Произошла ошибка при оформлении заказа', 'error');
-    } finally {
-      // Скрываем загрузку
-      if (btnText) btnText.style.opacity = '1';
-      if (btnSpinner) btnSpinner.style.display = 'none';
-      submitBtn.disabled = false;
-    }
+    await handleSubmitOrder(e.target);
   });
 
   // Маска для телефона
@@ -365,6 +125,259 @@ function initializeCheckoutForm() {
       }
     });
   }
+}
+
+// ОСНОВНАЯ ФУНКЦИЯ ИНТЕГРАЦИИ: Обработка отправки заказа
+async function handleSubmitOrder(form) {
+  const formData = new FormData(form);
+  const submitBtn = document.getElementById('submitOrder');
+  const btnText = submitBtn.querySelector('.btn-text');
+  const btnSpinner = submitBtn.querySelector('.btn-spinner');
+
+  // Валидация
+  if (!validateCheckoutForm(formData)) {
+    return;
+  }
+
+  const cart = getCart();
+  if (!cart || cart.length === 0) {
+    showCheckoutNotification('Корзина пуста', 'error');
+    return;
+  }
+
+  // Показать загрузку
+  submitBtn.disabled = true;
+  if (btnText) btnText.style.opacity = '0.7';
+  if (btnSpinner) btnSpinner.style.display = 'inline-block';
+
+  try {
+    // Подготовка данных для API
+    const orderData = {
+      userId: null, // Гостевой заказ (нет авторизации)
+      customerEmail: formData.get('email'),
+      customerFirstName: formData.get('firstName'),
+      customerLastName: formData.get('lastName'),
+      shippingAddress: formData.get('address'),
+      shippingCity: formData.get('city'),
+      shippingPhone: formData.get('phone'),
+      paymentMethod: formData.get('paymentMethod') || 'card',
+      items: cart.map(item => {
+        const mockData = getMockMangaData(item.id);
+        return {
+          mangaId: item.id,
+          quantity: item.quantity,
+          price: mockData.price
+        };
+      })
+    };
+
+    console.log('Отправляем заказ:', orderData);
+
+    // РЕАЛЬНЫЙ API ЗАПРОС К БЭКЕНДУ
+    const response = await fetch('/api/orders', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(orderData)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Ошибка при создании заказа');
+    }
+
+    const createdOrder = await response.json();
+    console.log('Заказ создан:', createdOrder);
+
+    // Очистить корзину при успешном заказе
+    localStorage.removeItem('manga-cart');
+    if (window.updateCartCounter) {
+      window.updateCartCounter();
+    }
+
+    // Показать модальное окно успеха
+    showSuccessModal({
+      orderId: createdOrder.orderNumber,
+      totalAmount: createdOrder.totalAmount
+    });
+
+    showCheckoutNotification('Заказ успешно оформлен!', 'success');
+
+  } catch (error) {
+    console.error('Ошибка оформления заказа:', error);
+    showCheckoutNotification(
+      error.message || 'Произошла ошибка при оформлении заказа. Попробуйте снова.',
+      'error'
+    );
+  } finally {
+    // Скрыть загрузку
+    if (btnText) btnText.style.opacity = '1';
+    if (btnSpinner) btnSpinner.style.display = 'none';
+    submitBtn.disabled = false;
+  }
+}
+
+// Валидация формы оформления заказа
+function validateCheckoutForm(formData) {
+  const requiredFields = ['firstName', 'lastName', 'email', 'phone', 'city', 'address'];
+  let isValid = true;
+
+  // Очистить предыдущие ошибки
+  document.querySelectorAll('.error-message').forEach(el => {
+    el.textContent = '';
+    el.style.display = 'none';
+  });
+
+  // Проверка обязательных полей
+  requiredFields.forEach(fieldName => {
+    const value = formData.get(fieldName);
+    if (!value || !value.toString().trim()) {
+      showFieldError(fieldName, 'Это поле обязательно');
+      isValid = false;
+    }
+  });
+
+  // Проверка email
+  const email = formData.get('email');
+  if (email && !isValidEmail(email)) {
+    showFieldError('email', 'Введите корректный email');
+    isValid = false;
+  }
+
+  // Проверка телефона
+  const phone = formData.get('phone');
+  if (phone && phone.toString().replace(/\D/g, '').length < 10) {
+    showFieldError('phone', 'Введите корректный номер телефона');
+    isValid = false;
+  }
+
+  return isValid;
+}
+
+// Показать ошибку поля
+function showFieldError(fieldName, message) {
+  const field = document.querySelector(`[name="${fieldName}"]`);
+  if (field) {
+    field.classList.add('error');
+    const errorEl = field.parentElement.querySelector('.error-message');
+    if (errorEl) {
+      errorEl.textContent = message;
+      errorEl.style.display = 'block';
+    }
+  }
+}
+
+// Применить маску телефона
+function applyPhoneMask(input) {
+  let value = input.value.replace(/\D/g, '');
+
+  if (value.length > 0) {
+    if (value[0] === '8') value = '7' + value.slice(1);
+    if (value[0] !== '7') value = '7' + value;
+  }
+
+  if (value.length >= 11) {
+    value = value.slice(0, 11);
+  }
+
+  let formatted = value;
+  if (value.length > 1) {
+    formatted = `+7 (${value.slice(1, 4)}`;
+    if (value.length > 4) {
+      formatted += `) ${value.slice(4, 7)}`;
+      if (value.length > 7) {
+        formatted += `-${value.slice(7, 9)}`;
+        if (value.length > 9) {
+          formatted += `-${value.slice(9, 11)}`;
+        }
+      }
+    }
+  }
+
+  input.value = formatted;
+}
+
+// Применить купон (заглушка)
+function applyCoupon() {
+  const couponInput = document.getElementById('couponCode');
+  const couponCode = couponInput?.value?.trim();
+
+  if (!couponCode) {
+    showCheckoutNotification('Введите код купона', 'warning');
+    return;
+  }
+
+  // Простая имитация купонов
+  const validCoupons = {
+    'FIRST10': { discount: 0.1, description: 'Скидка 10% на первый заказ' },
+    'SAVE500': { discount: 500, description: 'Скидка 500 рублей' }
+  };
+
+  if (validCoupons[couponCode]) {
+    const coupon = validCoupons[couponCode];
+    showCheckoutNotification(`Купон применен: ${coupon.description}`, 'success');
+    // В реальном приложении здесь бы пересчитывалась сумма заказа
+  } else {
+    showCheckoutNotification('Неверный код купона', 'error');
+  }
+}
+
+// Проверка корректности email
+function isValidEmail(email) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
+// Показать модальное окно успешного заказа
+function showSuccessModal(orderDetails) {
+  const modal = document.getElementById('successModal');
+  const orderNumberElement = document.getElementById('orderNumber');
+
+  if (orderNumberElement && orderDetails.orderId) {
+    orderNumberElement.textContent = orderDetails.orderId;
+  }
+
+  if (modal) {
+    modal.style.display = 'flex';
+  }
+}
+
+// Перейти к деталям заказа
+function goToOrderDetails() {
+  showCheckoutNotification('Переход к деталям заказа...', 'info');
+  setTimeout(() => {
+    // В реальном приложении здесь был бы переход к конкретному заказу
+    window.location.href = '/orders';
+  }, 1000);
+}
+
+// Продолжить покупки
+function continueShopping() {
+  window.location.href = '/catalog';
+}
+
+// Показать уведомление на странице checkout
+function showCheckoutNotification(message, type = 'info') {
+  const existingNotifications = document.querySelectorAll('.checkout-notification');
+  existingNotifications.forEach(n => n.remove());
+
+  const notification = document.createElement('div');
+  notification.className = `checkout-notification notification-${type}`;
+  notification.innerHTML = `
+    <div class="notification-content">
+      <span>${message}</span>
+      <button class="notification-close" onclick="this.parentElement.parentElement.remove()">&times;</button>
+    </div>
+  `;
+
+  document.body.appendChild(notification);
+
+  setTimeout(() => {
+    if (notification.parentElement) {
+      notification.remove();
+    }
+  }, 5000);
 }
 
 // Получить функции корзины из cart.js

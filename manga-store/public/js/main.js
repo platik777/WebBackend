@@ -1,102 +1,24 @@
+// Упрощенная версия main.js - убираем API мок-функции, оставляем только корзину и базовый функционал
+
 // Конфигурация приложения
 const APP_CONFIG = {
-  apiBaseUrl: '/api',
   cartStorageKey: 'manga-cart',
   userStorageKey: 'user-profile',
   settingsStorageKey: 'user-settings'
 };
 
-// API функции (базовые заглушки)
-async function apiRequest(url, options = {}) {
-  const defaultOptions = {
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers
-    }
-  };
-
-  try {
-    const response = await fetch(APP_CONFIG.apiBaseUrl + url, {
-      ...defaultOptions,
-      ...options
-    });
-
-    if (!response.ok) {
-      throw new Error(`API request failed with status: ${response.status}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('API request failed:', error);
-    throw error;
-  }
-}
-
-// API функции для манги
-async function getMangaList(filters = {}) {
-  // В реальном приложении здесь был бы запрос к серверу
-  // Возвращаем мок-данные
-  return getMockMangaList(filters);
-}
-
-async function getMangaById(id) {
-  // В реальном приложении здесь был бы запрос к серверу
-  const mockData = getMockMangaData(id);
-  return mockData.title ? mockData : null;
-}
-
-async function getFeaturedManga() {
-  // Возвращаем первые 6 товаров как рекомендуемые
-  const allManga = getMockMangaList();
-  return allManga.slice(0, 6);
-}
-
-// Мок-данные для каталога
-function getMockMangaList(filters = {}) {
-  const allManga = [
-    { id: 1, title: 'Наруто', price: 599, imageUrl: '/images/naruto.jpg', inStock: true, author: 'Масаси Кисимото', genre: 'Сёнен', rating: 5 },
-    { id: 2, title: 'Атака титанов', price: 699, imageUrl: '/images/aot.jpg', inStock: true, author: 'Хадзиме Исаяма', genre: 'Сёнен', rating: 5 },
-    { id: 3, title: 'Ван Пис', price: 549, imageUrl: '/images/onepiece.jpg', inStock: false, author: 'Эйитиро Ода', genre: 'Сёнен', rating: 5 },
-    { id: 4, title: 'Моя геройская академия', price: 579, imageUrl: '/images/mha.jpg', inStock: true, author: 'Кохэй Хорикоси', genre: 'Сёнен', rating: 4 },
-    { id: 5, title: 'Берсерк', price: 799, imageUrl: '/images/berserk.jpg', inStock: true, author: 'Кэнтаро Миура', genre: 'Сэйнэн', rating: 5 },
-    { id: 6, title: 'Магическая битва', price: 659, imageUrl: '/images/jjk.jpg', inStock: true, author: 'Гэгэ Акутами', genre: 'Сёнен', rating: 4 },
-    { id: 7, title: 'Убийца демонов', price: 619, imageUrl: '/images/demon-slayer.jpg', inStock: true, author: 'Коёхару Готогэ', genre: 'Сёнен', rating: 4 },
-    { id: 8, title: 'Мобильный воин Гандам', price: 729, imageUrl: '/images/gundam.jpg', inStock: false, author: 'Ёсиюки Томино', genre: 'Меха', rating: 3 }
-  ];
-
-  // Применяем фильтры
-  let filteredManga = allManga;
-
-  if (filters.genre) {
-    filteredManga = filteredManga.filter(manga => manga.genre === filters.genre);
-  }
-
-  if (filters.inStock !== undefined) {
-    filteredManga = filteredManga.filter(manga => manga.inStock === filters.inStock);
-  }
-
-  if (filters.search) {
-    const searchTerm = filters.search.toLowerCase();
-    filteredManga = filteredManga.filter(manga =>
-      manga.title.toLowerCase().includes(searchTerm) ||
-      manga.author.toLowerCase().includes(searchTerm)
-    );
-  }
-
-  return filteredManga;
-}
-
-// Мок-данные для одного товара (дублируем из cart.js для независимости)
+// Мок-данные для каталога (ТОЛЬКО для корзины, каталог теперь из БД)
 function getMockMangaData(id) {
+  // Эти данные используются только для корзины localStorage
   const mockData = {
-    1: { title: 'Наруто', price: 599, imageUrl: '/images/naruto.jpg', inStock: true, author: 'Масаси Кисимото', genre: 'Сёнен', rating: 5 },
-    2: { title: 'Атака титанов', price: 699, imageUrl: '/images/aot.jpg', inStock: true, author: 'Хадзиме Исаяма', genre: 'Сёнен', rating: 5 },
-    3: { title: 'Ван Пис', price: 549, imageUrl: '/images/onepiece.jpg', inStock: false, author: 'Эйитиро Ода', genre: 'Сёнен', rating: 5 },
-    4: { title: 'Моя геройская академия', price: 579, imageUrl: '/images/mha.jpg', inStock: true, author: 'Кохэй Хорикоси', genre: 'Сёнен', rating: 4 },
-    5: { title: 'Берсерк', price: 799, imageUrl: '/images/berserk.jpg', inStock: true, author: 'Кэнтаро Миура', genre: 'Сэйнэн', rating: 5 },
-    6: { title: 'Магическая битва', price: 659, imageUrl: '/images/jjk.jpg', inStock: true, author: 'Гэгэ Акутами', genre: 'Сёнен', rating: 4 },
-    7: { title: 'Убийца демонов', price: 619, imageUrl: '/images/demon-slayer.jpg', inStock: true, author: 'Коёхару Готогэ', genre: 'Сёнен', rating: 4 },
-    8: { title: 'Мобильный воин Гандам', price: 729, imageUrl: '/images/gundam.jpg', inStock: false, author: 'Ёсиюки Томино', genre: 'Меха', rating: 3 }
+    1: { title: 'Наруто', price: 599, imageUrl: '/images/naruto.jpg', inStock: true, author: 'Масаси Кисимото' },
+    2: { title: 'Атака титанов', price: 699, imageUrl: '/images/aot.jpg', inStock: true, author: 'Хадзиме Исаяма' },
+    3: { title: 'Ван Пис', price: 549, imageUrl: '/images/onepiece.jpg', inStock: false, author: 'Эйитиро Ода' },
+    4: { title: 'Моя геройская академия', price: 579, imageUrl: '/images/mha.jpg', inStock: true, author: 'Кохэй Хорикоси' },
+    5: { title: 'Берсерк', price: 799, imageUrl: '/images/berserk.jpg', inStock: true, author: 'Кэнтаро Миура' },
+    6: { title: 'Магическая битва', price: 659, imageUrl: '/images/jjk.jpg', inStock: true, author: 'Гэгэ Акутами' },
+    7: { title: 'Убийца демонов', price: 619, imageUrl: '/images/demon-slayer.jpg', inStock: true, author: 'Коёхару Готогэ' },
+    8: { title: 'Мобильный воин Гандам', price: 729, imageUrl: '/images/gundam.jpg', inStock: false, author: 'Ёсиюки Томино' }
   };
 
   return mockData[id] || {
@@ -104,182 +26,152 @@ function getMockMangaData(id) {
     price: 500,
     imageUrl: '/images/placeholder.jpg',
     inStock: false,
-    author: 'Неизвестный автор',
-    genre: 'Разное',
-    rating: 0
+    author: 'Неизвестный автор'
   };
 }
 
-// Инициализация кнопок "Добавить в корзину"
+// Инициализация кнопок добавления в корзину
 function initializeAddToCartButtons() {
   const addToCartButtons = document.querySelectorAll('.add-to-cart');
-
   addToCartButtons.forEach(button => {
-    button.addEventListener('click', function(e) {
+    button.addEventListener('click', (e) => {
       e.preventDefault();
-      const mangaId = this.getAttribute('data-manga-id');
-      const quantity = parseInt(this.getAttribute('data-quantity')) || 1;
+      const mangaId = parseInt(button.getAttribute('data-manga-id'));
+      const mangaData = getMockMangaData(mangaId);
 
       if (window.addToCart) {
-        window.addToCart(mangaId, quantity);
-      } else {
-        console.error('addToCart function not found');
+        window.addToCart(mangaId, mangaData);
+        showNotification(`"${mangaData.title}" добавлена в корзину!`, 'success');
       }
     });
   });
 }
 
-// Инициализация поиска
+// ВОССТАНОВЛЕННАЯ ФУНКЦИЯ ПОИСКА
 function initializeSearch() {
+  const searchForm = document.querySelector('.search-container');
   const searchInput = document.querySelector('.search-input');
   const searchBtn = document.querySelector('.search-btn');
 
-  if (!searchInput) return;
-
-  // Обработчик для кнопки поиска
   if (searchBtn) {
-    searchBtn.addEventListener('click', performSearch);
-  }
-
-  // Обработчик для Enter в поле поиска
-  searchInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      performSearch();
-    }
-  });
-}
-
-// Выполнить поиск
-function performSearch() {
-  const searchInput = document.querySelector('.search-input');
-  if (!searchInput) return;
-
-  const searchTerm = searchInput.value.trim();
-  if (searchTerm) {
-    // Перенаправляем на страницу каталога с параметром поиска
-    window.location.href = `/catalog?search=${encodeURIComponent(searchTerm)}`;
-  }
-}
-
-// Инициализация фильтров каталога
-function initializeFilters() {
-  const container = document.getElementById('mangaContainer');
-  if (!container) return;
-
-  const cards = Array.from(container.querySelectorAll('.manga-card'));
-
-  function applyFiltersAndSort() {
-    const genre = document.getElementById('genreFilter')?.value || '';
-    const stock = document.getElementById('stockFilter')?.value || '';
-    const sort = document.getElementById('sortFilter')?.value || '';
-
-    let filteredCards = cards.filter(card => {
-      const matchesGenre = !genre || card.dataset.genre?.includes(genre);
-      const matchesStock =
-        !stock ||
-        (stock === 'in-stock' && card.dataset.stock === 'true') ||
-        (stock === 'out-of-stock' && card.dataset.stock === 'false');
-      return matchesGenre && matchesStock;
+    searchBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const searchTerm = searchInput?.value?.trim();
+      if (searchTerm) {
+        performSearch(searchTerm);
+      }
     });
+  }
 
-    // Сортировка
-    if (sort) {
-      const [by, order] = sort.split('-');
-      filteredCards.sort((a, b) => {
-        let valA, valB;
-
-        switch(by) {
-          case 'price':
-            valA = parseFloat(a.dataset.price) || 0;
-            valB = parseFloat(b.dataset.price) || 0;
-            break;
-          case 'title':
-            valA = a.dataset.title?.toLowerCase() || '';
-            valB = b.dataset.title?.toLowerCase() || '';
-            break;
-          case 'rating':
-            valA = parseFloat(a.dataset.rating) || 0;
-            valB = parseFloat(b.dataset.rating) || 0;
-            break;
-          default:
-            return 0;
+  if (searchInput) {
+    searchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const searchTerm = e.target.value?.trim();
+        if (searchTerm) {
+          performSearch(searchTerm);
         }
+      }
+    });
+  }
+}
 
-        if (valA < valB) return order === 'asc' ? -1 : 1;
-        if (valA > valB) return order === 'asc' ? 1 : -1;
-        return 0;
+// Простая заглушка для фильтров (не работают)
+function initializeFilters() {
+  const filterSelects = document.querySelectorAll('.filter-select');
+  filterSelects.forEach(select => {
+    select.addEventListener('change', () => {
+      showNotification('Фильтры временно недоступны', 'info');
+    });
+  });
+
+  const clearFiltersBtn = document.getElementById('clearFilters');
+  if (clearFiltersBtn) {
+    clearFiltersBtn.addEventListener('click', () => {
+      filterSelects.forEach(select => {
+        select.value = '';
       });
-    }
-
-    // Скрываем все карточки
-    cards.forEach(card => {
-      card.style.display = 'none';
+      showNotification('Фильтры очищены', 'info');
     });
-
-    // Показываем отфильтрованные карточки
-    filteredCards.forEach(card => {
-      card.style.display = 'block';
-      container.appendChild(card); // Перемещаем в конец для правильного порядка
-    });
-
-    updateFilterResults(filteredCards.length);
   }
-
-  function updateFilterResults(count) {
-    const existingMessage = document.querySelector('.filter-results');
-    if (existingMessage) existingMessage.remove();
-
-    if (count === 0) {
-      const msg = document.createElement('div');
-      msg.className = 'filter-results empty-message';
-      msg.innerHTML = `
-        <div class="empty-state">
-          <i class="fas fa-search"></i>
-          <h3>Нет товаров по выбранным фильтрам</h3>
-          <p>Попробуйте изменить критерии поиска</p>
-          <button class="btn btn-outline" onclick="clearFilters()">Сбросить фильтры</button>
-        </div>
-      `;
-      container.appendChild(msg);
-    }
-  }
-
-  // Навешиваем обработчики на фильтры
-  ['genreFilter', 'stockFilter', 'sortFilter'].forEach(id => {
-    const element = document.getElementById(id);
-    if (element) {
-      element.addEventListener('change', applyFiltersAndSort);
-    }
-  });
-
-  // Применяем фильтры при загрузке
-  applyFiltersAndSort();
 }
 
-// Очистить фильтры
+// Заглушки для экспорта (для совместимости)
 function clearFilters() {
-  ['genreFilter', 'stockFilter', 'sortFilter'].forEach(id => {
-    const element = document.getElementById(id);
-    if (element) {
-      element.value = '';
-    }
+  const filterSelects = document.querySelectorAll('.filter-select');
+  filterSelects.forEach(select => {
+    select.value = '';
   });
-
-  // Перезапускаем фильтрацию
-  if (window.initializeFilters) {
-    initializeFilters();
-  }
+  showNotification('Фильтры очищены', 'info');
 }
 
-// Отображение ошибок
+function performSearch(query) {
+  showNotification('Поиск временно недоступен', 'info');
+  return [];
+}
+
+// Обработка глобальных ошибок
 function handleGlobalError(error) {
-  console.error('Global error:', error);
+  console.error('Глобальная ошибка:', error);
 
   const notification = document.createElement('div');
   notification.className = 'notification notification-error';
   notification.innerHTML = `
-    <span>Произошла ошибка. Попробуйте обновить страницу.</span>
+    <span>Произошла ошибка в приложении. Попробуйте обновить страницу.</span>
     <button onclick="this.parentElement.remove()">&times;</button>
+  `;
+
+  document.body.appendChild(notification);
+
+  setTimeout(() => {
+    if (notification.parentElement) {
+      notification.remove();
+    }
+  }, 5000);
+}
+
+// Универсальная система уведомлений
+function showNotification(message, type = 'info') {
+  // Удалить существующие уведомления
+  const existing = document.querySelectorAll('.main-notification');
+  existing.forEach(n => n.remove());
+
+  const notification = document.createElement('div');
+  notification.className = `main-notification notification-${type}`;
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    max-width: 300px;
+    animation: slideInRight 0.3s ease;
+    font-family: Inter, sans-serif;
+  `;
+
+  // Стили в зависимости от типа
+  const styles = {
+    success: { background: '#d4edda', borderLeft: '4px solid #28a745', color: '#155724' },
+    error: { background: '#f8d7da', borderLeft: '4px solid #dc3545', color: '#721c24' },
+    warning: { background: '#fff3cd', borderLeft: '4px solid #ffc107', color: '#856404' },
+    info: { background: '#d1ecf1', borderLeft: '4px solid #17a2b8', color: '#0c5460' }
+  };
+
+  const style = styles[type] || styles.info;
+  notification.style.background = style.background;
+  notification.style.borderLeft = style.borderLeft;
+  notification.style.color = style.color;
+
+  notification.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <span>${message}</span>
+      <button onclick="this.parentElement.parentElement.remove()" 
+              style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: inherit; margin-left: 1rem;">
+        &times;
+      </button>
+    </div>
   `;
 
   document.body.appendChild(notification);
@@ -293,18 +185,20 @@ function handleGlobalError(error) {
 
 // Инициализация приложения
 function initializeApp() {
+  console.log('Manga Store - Инициализация приложения');
+
   // Инициализируем корзину
   if (window.updateCartCounter) {
-    updateCartCounter();
+    window.updateCartCounter();
   }
 
   // Инициализируем кнопки добавления в корзину
   initializeAddToCartButtons();
 
-  // Инициализируем поиск
+  // Инициализируем поиск (заглушка)
   initializeSearch();
 
-  // Инициализируем фильтры, если мы на странице каталога
+  // Инициализируем фильтры (заглушка), если мы на странице каталога
   if (window.location.pathname === '/catalog') {
     initializeFilters();
   }
@@ -314,13 +208,34 @@ function initializeApp() {
   window.addEventListener('unhandledrejection', (e) => {
     handleGlobalError(e.reason);
   });
+
+  console.log('Приложение инициализировано успешно');
 }
 
 // Инициализация при загрузке DOM
 document.addEventListener('DOMContentLoaded', initializeApp);
 
+// CSS анимации для уведомлений
+if (!document.querySelector('#mainNotificationStyles')) {
+  const style = document.createElement('style');
+  style.id = 'mainNotificationStyles';
+  style.textContent = `
+    @keyframes slideInRight {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
 // Экспорт функций для использования в других файлах
 window.getMockMangaData = getMockMangaData;
-window.getMockMangaList = getMockMangaList;
 window.clearFilters = clearFilters;
 window.performSearch = performSearch;
+window.showNotification = showNotification;

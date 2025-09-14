@@ -111,7 +111,7 @@ function getMockMangaData(id) {
     8: { title: 'Мобильный воин Гандам', price: 729, imageUrl: '/images/gundam.jpg', inStock: false, author: 'Ёсиюки Томино' }
   };
 
-  return mockData[id % 8];
+  return mockData[id % 8 + 1];
 }
 
 // Загрузить товары корзины на странице

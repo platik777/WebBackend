@@ -34,10 +34,10 @@ export class AppController {
       user:
         isAuthenticated === 'true'
           ? {
-              name: 'Пользователь',
-              email: 'user@example.com',
-              isAuthenticated: true,
-            }
+            name: 'Пользователь',
+            email: 'user@example.com',
+            isAuthenticated: true,
+          }
           : null,
       featuredMangas: featuredMangas.map((manga) => {
         const mangaData = manga as any; // Временное решение для Prisma include данных
@@ -46,9 +46,7 @@ export class AppController {
           title: manga.title,
           author:
             mangaData.mangaAuthors?.[0]?.author?.displayName ||
-            mangaData.mangaAuthors?.[0]?.author?.firstName +
-              ' ' +
-              mangaData.mangaAuthors?.[0]?.author?.lastName ||
+            `${mangaData.mangaAuthors?.[0]?.author?.firstName} ${mangaData.mangaAuthors?.[0]?.author?.lastName}` ||
             'Неизвестен',
           price: manga.price.toNumber(),
           image: manga.imageUrl || '/images/placeholder.jpg',
@@ -77,10 +75,10 @@ export class AppController {
       user:
         isAuthenticated === 'true'
           ? {
-              name: 'Пользователь',
-              email: 'user@example.com',
-              isAuthenticated: true,
-            }
+            name: 'Пользователь',
+            email: 'user@example.com',
+            isAuthenticated: true,
+          }
           : null,
       mangas: mangas.map((manga) => {
         const mangaData = manga as any; // Временное решение для Prisma include данных
@@ -89,9 +87,7 @@ export class AppController {
           title: manga.title,
           author:
             mangaData.mangaAuthors?.[0]?.author?.displayName ||
-            mangaData.mangaAuthors?.[0]?.author?.firstName +
-              ' ' +
-              mangaData.mangaAuthors?.[0]?.author?.lastName ||
+            `${mangaData.mangaAuthors?.[0]?.author?.firstName} ${mangaData.mangaAuthors?.[0]?.author?.lastName}` ||
             'Неизвестен',
           price: manga.price.toNumber(),
           image: manga.imageUrl || '/images/placeholder.jpg',
@@ -113,10 +109,10 @@ export class AppController {
       user:
         isAuthenticated === 'true'
           ? {
-              name: 'Пользователь',
-              email: 'user@example.com',
-              isAuthenticated: true,
-            }
+            name: 'Пользователь',
+            email: 'user@example.com',
+            isAuthenticated: true,
+          }
           : null,
     };
   }
@@ -140,10 +136,10 @@ export class AppController {
       user:
         isAuthenticated === 'true'
           ? {
-              name: 'Пользователь',
-              email: 'user@example.com',
-              isAuthenticated: true,
-            }
+            name: 'Пользователь',
+            email: 'user@example.com',
+            isAuthenticated: true,
+          }
           : null,
       manga: {
         id: manga.id,
@@ -151,9 +147,7 @@ export class AppController {
         description: manga.description,
         author:
           mangaData.mangaAuthors?.[0]?.author?.displayName ||
-          mangaData.mangaAuthors?.[0]?.author?.firstName +
-            ' ' +
-            mangaData.mangaAuthors?.[0]?.author?.lastName ||
+          `${mangaData.mangaAuthors?.[0]?.author?.firstName} ${mangaData.mangaAuthors?.[0]?.author?.lastName}` ||
           'Неизвестен',
         price: manga.price.toNumber(),
         discountPrice: manga.discountPrice?.toNumber() || null,
@@ -177,7 +171,8 @@ export class AppController {
           userName: reviewData.user
             ? `${reviewData.user.firstName} ${reviewData.user.lastName}`
             : 'Аноним',
-          date: review.getFormattedDate(),
+          date: review.getFormattedDate ? review.getFormattedDate() :
+            new Date(review.createdAt).toLocaleDateString('ru-RU'),
         };
       }),
     };
@@ -200,13 +195,13 @@ export class AppController {
       title: 'Профиль пользователя',
       user: user
         ? {
-            id: user.id,
-            name: user.fullName,
-            email: user.email,
-            phone: user.phone,
-            address: user.address,
-            city: user.city,
-          }
+          id: user.id,
+          name: user.fullName || `${user.firstName} ${user.lastName}`,
+          email: user.email,
+          phone: user.phone,
+          address: user.address,
+          city: user.city,
+        }
         : null,
       orders: userOrders.map((order) => {
         const orderData = order as any; // Временное решение для Prisma include данных
@@ -226,7 +221,8 @@ export class AppController {
           rating: review.rating,
           comment: review.comment,
           mangaTitle: reviewData.manga?.title || 'Неизвестная манга',
-          date: review.getFormattedDate(),
+          date: review.getFormattedDate ? review.getFormattedDate() :
+            new Date(review.createdAt).toLocaleDateString('ru-RU'),
         };
       }),
     };
@@ -271,10 +267,10 @@ export class AppController {
       user:
         isAuthenticated === 'true'
           ? {
-              name: 'Пользователь',
-              email: 'user@example.com',
-              isAuthenticated: true,
-            }
+            name: 'Пользователь',
+            email: 'user@example.com',
+            isAuthenticated: true,
+          }
           : null,
     };
   }
@@ -287,10 +283,10 @@ export class AppController {
       user:
         isAuthenticated === 'true'
           ? {
-              name: 'Пользователь',
-              email: 'user@example.com',
-              isAuthenticated: true,
-            }
+            name: 'Пользователь',
+            email: 'user@example.com',
+            isAuthenticated: true,
+          }
           : null,
     };
   }

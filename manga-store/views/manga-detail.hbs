@@ -137,3 +137,219 @@
       </div>
     </div>
   </div>
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    initializeReviewForm();
+    initializeAddToCart();
+  });
+
+  // Инициализация формы отзывов
+  function initializeReviewForm() {
+    const reviewForm = document.getElementById('reviewForm');
+    if (!reviewForm) return;
+
+    reviewForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      await handleSubmitReview(this);
+    });
+
+    // Обработка звездочек рейтинга
+    const starInputs = document.querySelectorAll('input[name="rating"]');
+    starInputs.forEach(input => {
+      input.addEventListener('change', function() {
+        updateStarDisplay(this.value);
+      });
+    });
+  }
+
+  // ОСНОВНАЯ ФУНКЦИЯ ИНТЕГРАЦИИ: Отправка отзыва
+  async function handleSubmitReview(form) {
+    const formData = new FormData(form);
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+
+    // Валидация
+    const rating = formData.get('rating');
+    const comment = formData.get('comment');
+
+    if (!rating) {
+      showReviewNotification('Пожалуйста, выберите рейтинг', 'warning');
+      return;
+    }
+
+    if (!comment || comment.trim().length < 10) {
+      showReviewNotification('Комментарий должен содержать минимум 10 символов', 'warning');
+      return;
+    }
+
+    // Показать загрузку
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Отправляем...';
+
+    try {
+      // Подготовка данных для API
+      const reviewData = {
+        userId: 1, // Заглушка для пользователя (пока нет авторизации)
+        mangaId: {{manga.id}}, // ID манги из Handlebars контекста
+        rating: parseInt(rating),
+        comment: comment.trim()
+      };
+
+      console.log('Отправляем отзыв:', reviewData);
+
+      // РЕАЛЬНЫЙ API ЗАПРОС К БЭКЕНДУ
+      const response = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(reviewData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Ошибка при создании отзыва');
+      }
+
+      const createdReview = await response.json();
+      console.log('Отзыв создан:', createdReview);
+
+      showReviewNotification('Отзыв успешно добавлен!', 'success');
+
+      // Очистить форму
+      form.reset();
+      updateStarDisplay(0);
+
+      // Перезагрузить страницу через 2 секунды, чтобы показать новый отзыв
+      setTimeout(() => {
+        location.reload();
+      }, 2000);
+
+    } catch (error) {
+      console.error('Ошибка отправки отзыва:', error);
+      showReviewNotification(
+        error.message || 'Произошла ошибка при добавлении отзыва. Попробуйте снова.',
+        'error'
+      );
+    } finally {
+      // Восстановить кнопку
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalText;
+    }
+  }
+
+  // Обновление визуального отображения звезд
+  function updateStarDisplay(rating) {
+    const stars = document.querySelectorAll('.star-rating label');
+    stars.forEach((star, index) => {
+      const starValue = stars.length - index;
+      if (starValue <= rating) {
+        star.style.color = '#ffc107';
+      } else {
+        star.style.color = '#ddd';
+      }
+    });
+  }
+
+  // Показать уведомление для отзывов
+  function showReviewNotification(message, type = 'info') {
+    // Удалить существующие уведомления
+    const existing = document.querySelectorAll('.review-notification');
+    existing.forEach(n => n.remove());
+
+    const notification = document.createElement('div');
+    notification.className = `review-notification notification-${type}`;
+    notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    max-width: 300px;
+    animation: slideInRight 0.3s ease;
+  `;
+
+    // Стили в зависимости от типа
+    const styles = {
+      success: { background: '#d4edda', border: '4px solid #28a745', color: '#155724' },
+      error: { background: '#f8d7da', border: '4px solid #dc3545', color: '#721c24' },
+      warning: { background: '#fff3cd', border: '4px solid #ffc107', color: '#856404' },
+      info: { background: '#d1ecf1', border: '4px solid #17a2b8', color: '#0c5460' }
+    };
+
+    const style = styles[type] || styles.info;
+    notification.style.background = style.background;
+    notification.style.borderLeft = style.border;
+    notification.style.color = style.color;
+
+    notification.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <span>${message}</span>
+      <button onclick="this.parentElement.parentElement.remove()"
+              style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: inherit; margin-left: 1rem;">
+        &times;
+      </button>
+    </div>
+  `;
+
+    document.body.appendChild(notification);
+
+    // Автоматически удалить через 5 секунд
+    setTimeout(() => {
+      if (notification.parentElement) {
+        notification.remove();
+      }
+    }, 5000);
+  }
+
+  // Инициализация кнопки добавления в корзину
+  function initializeAddToCart() {
+    const addToCartBtn = document.getElementById('addToCartBtn');
+    if (!addToCartBtn) return;
+
+    addToCartBtn.addEventListener('click', function() {
+      const mangaId = {{manga.id}};
+      const mangaData = {
+        id: mangaId,
+        title: '{{manga.title}}',
+        author: '{{manga.author}}',
+        price: {{manga.price}},
+        image: '{{manga.image}}',
+        inStock: {{manga.inStock}}
+      };
+
+      if (!mangaData.inStock) {
+        showReviewNotification('Товар временно отсутствует', 'warning');
+        return;
+      }
+
+      // Используем функцию из cart.js
+      if (window.addToCart) {
+        window.addToCart(mangaId, mangaData);
+        showReviewNotification('Товар добавлен в корзину!', 'success');
+      }
+    });
+  }
+
+  // CSS анимация для уведомлений (если еще не добавлена)
+  if (!document.querySelector('#reviewAnimations')) {
+    const style = document.createElement('style');
+    style.id = 'reviewAnimations';
+    style.textContent = `
+    @keyframes slideInRight {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+  `;
+    document.head.appendChild(style);
+  }
+</script>

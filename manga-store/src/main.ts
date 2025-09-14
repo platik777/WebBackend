@@ -11,9 +11,12 @@ import { IResponseWithLayout } from './common/interfaces/IResponseWithLayout';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const configService = app.get(ConfigService);
-
   app.useStaticAssets(join(process.cwd(), 'public'), {
     prefix: '/',
+  });
+  app.enableCors({
+    origin: true,
+    credentials: true,
   });
   app.setBaseViewsDir(join(process.cwd(), 'views'));
   app.setViewEngine('hbs');
