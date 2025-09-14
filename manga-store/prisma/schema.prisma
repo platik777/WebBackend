@@ -130,7 +130,6 @@ model Order {
   paymentStatus   PaymentStatus @default(PENDING)
   userId          Int? // Может быть null для гостевых заказов
 
-  // Поля для гостевых заказов
   customerEmail     String?
   customerFirstName String?
   customerLastName  String?
