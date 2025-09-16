@@ -20,7 +20,6 @@ import { Observable, interval, map, switchMap, catchError, of } from 'rxjs';
 export class ReviewsWebController {
   constructor(private readonly reviewsService: ReviewsService) {}
 
-  // Главная страница управления отзывами
   @Get()
   @Render('reviews-admin/index')
   async index() {

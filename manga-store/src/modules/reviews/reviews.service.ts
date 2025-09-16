@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
-import { Review, ReviewWithRelations } from './entities/review.entity';
+import { Review } from './entities/review.entity';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
 
@@ -9,8 +9,14 @@ export class ReviewsService {
   constructor(private prisma: PrismaService) {}
 
   async create(createReviewDto: CreateReviewDto): Promise<Review> {
+    // Преобразуем строки в числа
     const reviewData = await this.prisma.review.create({
-      data: createReviewDto,
+      data: {
+        userId: parseInt(createReviewDto.userId?.toString() || '1'),
+        mangaId: parseInt(createReviewDto.mangaId?.toString() || '1'),
+        rating: parseInt(createReviewDto.rating?.toString() || '5'),
+        comment: createReviewDto.comment || '',
+      },
       include: {
         user: {
           select: {
@@ -29,30 +35,11 @@ export class ReviewsService {
       },
     });
 
-    return new Review(reviewData as ReviewWithRelations);
+    return new Review(reviewData);
   }
 
-  async findAll(filters?: {
-    mangaId?: number;
-    userId?: number;
-    rating?: number;
-  }): Promise<Review[]> {
-    const where: any = {};
-
-    if (filters) {
-      if (filters.mangaId) {
-        where.mangaId = filters.mangaId;
-      }
-      if (filters.userId) {
-        where.userId = filters.userId;
-      }
-      if (filters.rating) {
-        where.rating = filters.rating;
-      }
-    }
-
+  async findAll(filters: any): Promise<Review[]> {
     const reviews = await this.prisma.review.findMany({
-      where,
       include: {
         user: {
           select: {
@@ -69,12 +56,60 @@ export class ReviewsService {
           },
         },
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
+      orderBy: { createdAt: 'desc' },
     });
 
-    return reviews.map((review) => new Review(review as ReviewWithRelations));
+    return reviews.map((review) => new Review(review));
+  }
+
+  async findByMangaId(mangaId: number): Promise<Review[]> {
+    const reviews = await this.prisma.review.findMany({
+      where: { mangaId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+        manga: {
+          select: {
+            id: true,
+            title: true,
+            imageUrl: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return reviews.map((review) => new Review(review));
+  }
+
+  async findByUserId(userId: number): Promise<Review[]> {
+    const reviews = await this.prisma.review.findMany({
+      where: { userId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+        manga: {
+          select: {
+            id: true,
+            title: true,
+            imageUrl: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return reviews.map((review) => new Review(review));
   }
 
   async findOne(id: number): Promise<Review | null> {
@@ -98,65 +133,24 @@ export class ReviewsService {
       },
     });
 
-    return review ? new Review(review as ReviewWithRelations) : null;
-  }
-
-  async findByMangaId(mangaId: number): Promise<Review[]> {
-    const reviews = await this.prisma.review.findMany({
-      where: { mangaId },
-      include: {
-        user: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-
-    return reviews.map(
-      (review) =>
-        new Review({
-          ...review,
-          manga: undefined, // Не включаем manga для этого метода
-        } as ReviewWithRelations),
-    );
-  }
-
-  async findByUserId(userId: number): Promise<Review[]> {
-    const reviews = await this.prisma.review.findMany({
-      where: { userId },
-      include: {
-        manga: {
-          select: {
-            id: true,
-            title: true,
-            imageUrl: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-
-    return reviews.map(
-      (review) =>
-        new Review({
-          ...review,
-          user: undefined, // Не включаем user для этого метода
-        } as ReviewWithRelations),
-    );
+    return review ? new Review(review) : null;
   }
 
   async update(id: number, updateReviewDto: UpdateReviewDto): Promise<Review> {
+    // Преобразуем строки в числа при обновлении
+    const updateData: any = {};
+
+    if (updateReviewDto.rating) {
+      updateData.rating = parseInt(updateReviewDto.rating.toString());
+    }
+
+    if (updateReviewDto.comment !== undefined) {
+      updateData.comment = updateReviewDto.comment;
+    }
+
     const review = await this.prisma.review.update({
       where: { id },
-      data: updateReviewDto,
+      data: updateData,
       include: {
         user: {
           select: {
@@ -175,7 +169,7 @@ export class ReviewsService {
       },
     });
 
-    return new Review(review as ReviewWithRelations);
+    return new Review(review);
   }
 
   async remove(id: number): Promise<void> {
