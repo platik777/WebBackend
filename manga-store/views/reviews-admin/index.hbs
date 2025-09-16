@@ -169,7 +169,6 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    // Подключение к Server-Sent Events
     const eventSource = new EventSource('/reviews-admin/events');
 
     eventSource.onmessage = function(event) {
@@ -202,6 +201,13 @@
 
   function showNotification(message, type = 'success') {
     const container = document.getElementById('notifications');
+
+    // Проверяем, существует ли контейнер
+    if (!container) {
+      console.error('Элемент notifications не найден');
+      return;
+    }
+
     const notification = document.createElement('div');
     notification.className = 'notification';
     notification.textContent = message;
@@ -214,7 +220,6 @@
 
     container.appendChild(notification);
 
-    // Автоматически убираем через 3 секунды
     setTimeout(() => {
       if (notification.parentElement) {
         notification.remove();

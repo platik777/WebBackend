@@ -8,6 +8,7 @@ import * as hbs from 'hbs';
 import { NextFunction, Request } from 'express';
 import { IResponseWithLayout } from './common/interfaces/IResponseWithLayout';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -22,6 +23,17 @@ async function bootstrap() {
   });
   app.setBaseViewsDir(join(process.cwd(), 'views'));
   app.setViewEngine('hbs');
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
+    }),
+  );
 
   const config = new DocumentBuilder()
     .setTitle('Manga Store API')

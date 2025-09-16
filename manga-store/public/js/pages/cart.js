@@ -1,6 +1,3 @@
-// cart.js - Исправленная версия с правильной обработкой данных
-
-// Мок-данные для корзины (синхронизируем с main.js)
 function getMockMangaData(id) {
   const mockData = {
     1: { title: 'Наруто', price: 599, imageUrl: '/images/naruto.jpg', inStock: true, author: 'Масаси Кисимото' },
@@ -59,8 +56,8 @@ function addToCart(mangaId, mangaData = null, quantity = 1) {
 
   saveCart(cart);
 
-  if (window.showNotification) {
-    showNotification(`"${mangaData.title}" добавлен в корзину`, 'success');
+  if (window.showCartNotification) {
+    showCartNotification(`"${mangaData.title}" добавлен в корзину`, 'success');
   }
 }
 
@@ -74,8 +71,8 @@ function removeFromCart(mangaId) {
     loadCartItems();
   }
 
-  if (window.showNotification) {
-    showNotification('Товар удален из корзины', 'info');
+  if (window.showCartNotification) {
+    showCartNotification('Товар удален из корзины', 'info');
   }
 }
 
@@ -107,8 +104,8 @@ function clearCart() {
     loadCartItems();
   }
 
-  if (window.showNotification) {
-    showNotification('Корзина очищена', 'success');
+  if (window.showCartNotification) {
+    showCartNotification('Корзина очищена', 'success');
   }
 }
 
@@ -295,8 +292,8 @@ function proceedToCheckout() {
   const cart = getCart();
 
   if (cart.length === 0) {
-    if (window.showNotification) {
-      showNotification('Корзина пуста', 'error');
+    if (window.showCartNotification) {
+      showCartNotification('Корзина пуста', 'error');
     }
     return;
   }
@@ -310,8 +307,8 @@ function proceedToCheckout() {
   const unavailableItems = cartWithDetails.filter(item => !item.inStock);
 
   if (unavailableItems.length > 0) {
-    if (window.showNotification) {
-      showNotification('В корзине есть недоступные товары', 'error');
+    if (window.showCartNotification) {
+      showCartNotification('В корзине есть недоступные товары', 'error');
     }
     return;
   }
@@ -321,9 +318,9 @@ function proceedToCheckout() {
 }
 
 // Показать уведомление (fallback, если нет глобальной функции)
-function showNotification(message, type = 'info') {
-  if (window.showNotification) {
-    window.showNotification(message, type);
+function showCartNotification(message, type = 'info') {
+  if (window.showCartNotification) {
+    window.showCartNotification(message, type);
     return;
   }
 

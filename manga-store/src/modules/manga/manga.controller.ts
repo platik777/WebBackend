@@ -14,7 +14,7 @@ import { MangaService } from './manga.service';
 import { CreateMangaDto } from './dto/create-manga.dto';
 import { UpdateMangaDto } from './dto/update-manga.dto';
 
-@Controller()
+@Controller('manga')
 export class MangaController {
   constructor(private readonly mangaService: MangaService) {}
 

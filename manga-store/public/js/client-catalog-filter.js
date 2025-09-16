@@ -127,10 +127,10 @@ class ClientCatalogFilters {
     this.updateResultsCount(filteredCards.length);
 
     // Показываем уведомление
-    if (window.showNotification) {
+    if (window.showCartNotification) {
       const hasFilters = Object.values(this.currentFilters).some(v => v !== '');
       if (hasFilters) {
-        showNotification(`Найдено товаров: ${filteredCards.length}`, 'success');
+        showCartNotification(`Найдено товаров: ${filteredCards.length}`, 'success');
       }
     }
   }
@@ -361,8 +361,8 @@ class ClientCatalogFilters {
     this.updateMangaDisplay(this.allMangaCards);
     this.updateResultsCount(this.allMangaCards.length);
 
-    if (window.showNotification) {
-      showNotification('Фильтры очищены', 'info');
+    if (window.showCartNotification) {
+      showCartNotification('Фильтры очищены', 'info');
     }
   }
 

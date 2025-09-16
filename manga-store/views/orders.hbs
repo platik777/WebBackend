@@ -258,7 +258,7 @@
     const cart = JSON.parse(localStorage.getItem('manga-cart') || '[]');
 
     if (cart.length === 0) {
-      showNotification('Корзина пуста', 'error');
+      showCartNotification('Корзина пуста', 'error');
       return;
     }
 
@@ -286,12 +286,12 @@
       setTimeout(() => {
         localStorage.removeItem('manga-cart');
         updateCartCounter();
-        showNotification('Заказ успешно оформлен!', 'success');
+        showCartNotification('Заказ успешно оформлен!', 'success');
         window.location.href = '/orders';
       }, 1000);
 
     } catch (error) {
-      showNotification('Ошибка при оформлении заказа', 'error');
+      showCartNotification('Ошибка при оформлении заказа', 'error');
     }
   }
 

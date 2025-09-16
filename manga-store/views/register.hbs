@@ -357,7 +357,7 @@
       // Симуляция регистрации
       await new Promise(resolve => setTimeout(resolve, 2000));
 
-      showNotification('Регистрация прошла успешно! Проверьте email для подтверждения аккаунта.', 'success');
+      showCartNotification('Регистрация прошла успешно! Проверьте email для подтверждения аккаунта.', 'success');
 
       setTimeout(() => {
         window.location.href = '/login?registered=true';
@@ -367,7 +367,7 @@
       if (error.message.includes('email')) {
         showError('emailError', 'Пользователь с таким email уже существует');
       } else {
-        showNotification(error.message || 'Ошибка при регистрации', 'error');
+        showCartNotification(error.message || 'Ошибка при регистрации', 'error');
       }
     } finally {
       showLoading(false);

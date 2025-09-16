@@ -222,7 +222,7 @@
           }));
         }
 
-        showNotification('Вход выполнен успешно!', 'success');
+        showCartNotification('Вход выполнен успешно!', 'success');
 
         // Перенаправление на главную или предыдущую страницу
         const returnUrl = new URLSearchParams(window.location.search).get('return') || '/';
@@ -235,7 +235,7 @@
       }
 
     } catch (error) {
-      showNotification(error.message || 'Ошибка входа в систему', 'error');
+      showCartNotification(error.message || 'Ошибка входа в систему', 'error');
     } finally {
       showLoading(false);
     }
