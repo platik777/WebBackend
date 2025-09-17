@@ -26,7 +26,6 @@ export class AppController {
   @Get()
   @Render('index')
   async getHomePage(@Query('auth') isAuthenticated?: string) {
-    // Получаем рекомендуемые манги из базы данных
     const featuredMangas = await this.mangaService.findFeatured();
 
     return {
@@ -40,7 +39,7 @@ export class AppController {
           }
           : null,
       featuredMangas: featuredMangas.map((manga) => {
-        const mangaData = manga as any; // Временное решение для Prisma include данных
+        const mangaData = manga as any;
         return {
           id: manga.id,
           title: manga.title,
@@ -67,7 +66,6 @@ export class AppController {
     @Query('auth') isAuthenticated?: string,
     @Query() queryParams?: any,
   ) {
-    // Получаем мангу с фильтрами из базы данных
     const mangas = await this.mangaService.findAll();
 
     return {
@@ -81,7 +79,7 @@ export class AppController {
           }
           : null,
       mangas: mangas.map((manga) => {
-        const mangaData = manga as any; // Временное решение для Prisma include данных
+        const mangaData = manga as any;
         return {
           id: manga.id,
           title: manga.title,
@@ -192,7 +190,7 @@ export class AppController {
         }
         : null,
       orders: userOrders.map((order) => {
-        const orderData = order as any; // Временное решение для Prisma include данных
+        const orderData = order as any;
         return {
           id: order.id,
           orderNumber: order.orderNumber,
@@ -203,7 +201,7 @@ export class AppController {
         };
       }),
       reviews: userReviews.map((review) => {
-        const reviewData = review as any; // Временное решение для Prisma include данных
+        const reviewData = review as any;
         return {
           id: review.id,
           rating: review.rating,
@@ -228,7 +226,7 @@ export class AppController {
     return {
       title: 'Мои заказы',
       orders: orders.map((order) => {
-        const orderData = order as any; // Временное решение для Prisma include данных
+        const orderData = order as any;
         return {
           id: order.id,
           orderNumber: order.orderNumber,

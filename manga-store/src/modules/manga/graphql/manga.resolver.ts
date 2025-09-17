@@ -52,7 +52,6 @@ export class MangaResolver {
     description: 'Получить рекомендуемую мангу'
   })
   async getFeaturedManga(): Promise<MangaType[]> {
-    // Используем существующие методы сервиса
     const allManga = await this.mangaService.findAll();
     return allManga.filter(manga => manga.isFeatured);
   }
@@ -155,11 +154,9 @@ export class MangaResolver {
   }
 
   // Field Resolvers - для получения связанных данных
-
   @ResolveField(() => [ReviewType], { description: 'Отзывы о манге' })
   async reviews(@Parent() manga: MangaType): Promise<ReviewType[]> {
     const reviews = await this.reviewsService.findByMangaId(manga.id);
-    // Преобразуем null в undefined для совместимости типов
     return reviews.map(review => ({
       ...review,
       comment: review.comment || undefined,

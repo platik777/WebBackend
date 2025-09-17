@@ -18,56 +18,6 @@ export class Author implements PrismaAuthor {
     return this.pseudonym || `${this.firstName} ${this.lastName}`;
   }
 
-  get fullName(): string {
-    return `${this.firstName} ${this.lastName}`;
-  }
-
-  get age(): number | null {
-    if (!this.birthDate) return null;
-
-    const today = new Date();
-    const birthYear = this.birthDate.getFullYear();
-    const currentYear = today.getFullYear();
-
-    let age = currentYear - birthYear;
-
-    const monthDiff = today.getMonth() - this.birthDate.getMonth();
-    if (
-      monthDiff < 0 ||
-      (monthDiff === 0 && today.getDate() < this.birthDate.getDate())
-    ) {
-      age--;
-    }
-
-    return age;
-  }
-
-  get isLiving(): boolean {
-    if (!this.birthDate) return true;
-    return this.age !== null && this.age <= 120;
-  }
-
-  hasWrittenIn(language: string): boolean {
-    // Упрощенная логика на основе национальности
-    const languageMap: { [key: string]: string[] } = {
-      Japanese: ['Японский', 'Japanese'],
-      Korean: ['Корейский', 'Korean'],
-      Chinese: ['Китайский', 'Chinese'],
-      American: ['Английский', 'English'],
-      Russian: ['Русский', 'Russian'],
-    };
-
-    const authorLanguages = languageMap[this.nationality || ''] || [];
-    return authorLanguages.includes(language);
-  }
-
-  updateBiography(newBiography: string): void {
-    if (newBiography.trim().length < 10) {
-      throw new Error('Биография должна содержать минимум 10 символов');
-    }
-    this.biography = newBiography.trim();
-  }
-
   validate(): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
 

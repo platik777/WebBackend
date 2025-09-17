@@ -188,9 +188,6 @@ type MangaType {
 }
 
 type Mutation {
-  """Одобрить отзыв (для модерации)"""
-  approveReview(id: ID!): Boolean!
-
   """Создать новую мангу"""
   createManga(input: CreateMangaInput!): MangaType!
 
@@ -208,9 +205,6 @@ type Mutation {
 
   """Опубликовать мангу (сделать активной)"""
   publishManga(id: ID!): Boolean!
-
-  """Отклонить отзыв (для модерации)"""
-  rejectReview(id: ID!): Boolean!
 
   """Убрать мангу из рекомендуемых"""
   unfeatureManga(id: ID!): Boolean!

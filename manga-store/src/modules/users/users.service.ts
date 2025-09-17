@@ -116,7 +116,7 @@ export class UsersService {
   }
 
   async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
-    await this.findOne(id); // Проверяем существование
+    await this.findOne(id);
 
     const updateData = { ...updateUserDto };
 
@@ -135,7 +135,6 @@ export class UsersService {
   async remove(id: number): Promise<void> {
     await this.findOne(id);
 
-    // Мягкое удаление - помечаем пользователя как неактивного
     await this.prisma.user.update({
       where: { id },
       data: { isActive: false },

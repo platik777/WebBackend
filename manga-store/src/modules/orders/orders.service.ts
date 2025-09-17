@@ -18,7 +18,6 @@ export class OrdersService {
       0,
     );
 
-    // Подготавливаем данные для создания заказа
     const orderCreateData: any = {
       totalAmount,
       shippingAddress: createOrderDto.shippingAddress,
@@ -164,7 +163,7 @@ export class OrdersService {
   }
 
   async updateStatus(id: number, status: OrderStatus): Promise<Order> {
-    await this.findOne(id); // Проверяем существование
+    await this.findOne(id);
 
     const order = await this.prisma.order.update({
       where: { id },
@@ -183,7 +182,7 @@ export class OrdersService {
   }
 
   async remove(id: number): Promise<void> {
-    await this.findOne(id); // Проверяем существование
+    await this.findOne(id);
 
     await this.prisma.order.delete({
       where: { id },

@@ -95,7 +95,6 @@ export class Manga {
     this.createdAt = data.createdAt;
     this.updatedAt = data.updatedAt;
 
-    // Обрабатываем издательство
     if (data.publisher) {
       this.publisher = {
         id: data.publisher.id,
@@ -107,7 +106,6 @@ export class Manga {
       };
     }
 
-    // Обрабатываем авторов
     this.authors = data.mangaAuthors?.map((ma) => ({
       id: ma.author.id,
       firstName: ma.author.firstName,
@@ -116,7 +114,6 @@ export class Manga {
       displayName: ma.author.pseudonym || `${ma.author.firstName} ${ma.author.lastName}`,
     })) || [];
 
-    // Обрабатываем жанры
     this.genres = data.mangaGenres?.map((mg) => ({
       id: mg.genre.id,
       name: mg.genre.name,

@@ -28,7 +28,6 @@ export class ReviewResolver {
       minRating: filters?.minRating,
     });
 
-    // Преобразуем null в undefined для совместимости типов
     return reviews.map(review => ({
       ...review,
       comment: review.comment || undefined,
@@ -165,32 +164,7 @@ export class ReviewResolver {
     return true;
   }
 
-  @Mutation(() => Boolean, {
-    name: 'approveReview',
-    description: 'Одобрить отзыв (для модерации)'
-  })
-  async approveReview(
-    @Args('id', { type: () => ID }) id: number,
-  ): Promise<boolean> {
-    // Здесь можно добавить логику модерации
-    // Пока просто возвращаем true
-    return true;
-  }
-
-  @Mutation(() => Boolean, {
-    name: 'rejectReview',
-    description: 'Отклонить отзыв (для модерации)'
-  })
-  async rejectReview(
-    @Args('id', { type: () => ID }) id: number,
-  ): Promise<boolean> {
-    // Здесь можно добавить логику модерации
-    await this.reviewsService.remove(id);
-    return true;
-  }
-
   // Field Resolvers - для получения связанных данных
-
   @ResolveField(() => MangaType, { description: 'Информация о манге' })
   async manga(@Parent() review: ReviewType): Promise<MangaType> {
     return await this.mangaService.findOne(review.mangaId);

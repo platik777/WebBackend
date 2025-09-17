@@ -39,7 +39,6 @@ export class PaginationInfoType {
   hasPreviousPage: boolean;
 }
 
-// Generic функция для создания пагинированного типа
 export function PaginatedResponse<T>(ItemType: Type<T>) {
   @ObjectType({ isAbstract: true })
   abstract class PaginatedType {

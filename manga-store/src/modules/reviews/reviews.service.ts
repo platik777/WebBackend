@@ -203,7 +203,7 @@ export class ReviewsService {
   }
 
   async update(id: number, updateReviewDto: UpdateReviewDto): Promise<Review> {
-    await this.findOne(id); // Проверяем существование
+    await this.findOne(id);
 
     const review = await this.prisma.review.update({
       where: { id },
@@ -230,7 +230,7 @@ export class ReviewsService {
   }
 
   async remove(id: number): Promise<void> {
-    await this.findOne(id); // Проверяем существование
+    await this.findOne(id);
 
     await this.prisma.review.delete({
       where: { id },

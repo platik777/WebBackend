@@ -18,14 +18,13 @@ import { ReviewsModule } from './modules/reviews/reviews.module';
       isGlobal: true,
       envFilePath: '.env',
     }),
-    // GraphQL Configuration
+
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
       sortSchema: true,
       playground: true,
       introspection: true,
-      // Настройки безопасности и сложности запросов
       context: ({ req }) => ({ req }),
       formatError: (error) => ({
         message: error.message,

@@ -128,7 +128,7 @@ model Order {
   shippingPhone   String
   paymentMethod   String?
   paymentStatus   PaymentStatus @default(PENDING)
-  userId          Int? // Может быть null для гостевых заказов
+  userId          Int?
 
   customerEmail     String?
   customerFirstName String?
@@ -138,7 +138,6 @@ model Order {
   updatedAt DateTime  @updatedAt
   shippedAt DateTime?
 
-  // Связи
   user       User?       @relation(fields: [userId], references: [id])
   orderItems OrderItem[]
 

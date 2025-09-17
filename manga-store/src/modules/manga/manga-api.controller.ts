@@ -108,7 +108,7 @@ export class MangaApiController {
     type: [MangaResponseDto],
   })
   async getReviews(@Param('id', ParseIntPipe) id: number) {
-    return await this.mangaService.getReviews(id);
+    return this.mangaService.getReviews(id);
   }
 
   @Patch(':id')

@@ -1,4 +1,3 @@
-// src/modules/reviews/reviews-web.controller.ts
 import {
   Controller,
   Get,
@@ -43,7 +42,6 @@ export class ReviewsWebController {
     };
   }
 
-  // Форма добавления отзыва
   @Get('add')
   @Render('reviews-admin/create')
   async create() {
@@ -52,14 +50,12 @@ export class ReviewsWebController {
     };
   }
 
-  // Обработка создания отзыва
   @Post('add')
   @Redirect('/reviews-admin')
   async store(@Body() createReviewDto: CreateReviewDto) {
     await this.reviewsService.create(createReviewDto);
   }
 
-  // Форма редактирования отзыва
   @Get(':id/edit')
   @Render('reviews-admin/edit')
   async edit(@Param('id', ParseIntPipe) id: number) {
@@ -82,14 +78,12 @@ export class ReviewsWebController {
     };
   }
 
-  // Обработка редактирования отзыва
   @Post(':id/edit')
   @Redirect('/reviews-admin')
   async update(@Param('id', ParseIntPipe) id: number, @Body() data: any) {
     await this.reviewsService.update(id, data);
   }
 
-  // Удаление отзыва
   @Post(':id/delete')
   @Redirect('/reviews-admin')
   async delete(@Param('id', ParseIntPipe) id: number) {
@@ -99,7 +93,6 @@ export class ReviewsWebController {
   @Sse('events')
   sendReviewUpdates(): Observable<MessageEvent> {
     return interval(5000).pipe(
-      // Обновляем каждые 5 секунд
       switchMap(async () => {
         try {
           const reviews = await this.reviewsService.findAll({});

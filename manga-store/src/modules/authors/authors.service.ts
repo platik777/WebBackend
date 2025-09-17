@@ -123,7 +123,7 @@ export class AuthorsService {
   }
 
   async getAuthorManga(id: number) {
-    await this.findOne(id); // Проверяем существование автора
+    await this.findOne(id);
 
     return this.prisma.manga.findMany({
       where: {
@@ -147,7 +147,7 @@ export class AuthorsService {
   }
 
   async update(id: number, updateAuthorDto: UpdateAuthorDto): Promise<Author> {
-    await this.findOne(id); // Проверяем существование
+    await this.findOne(id);
 
     const updateData: any = { ...updateAuthorDto };
     if (updateData.birthDate) {
@@ -163,9 +163,8 @@ export class AuthorsService {
   }
 
   async remove(id: number): Promise<void> {
-    await this.findOne(id); // Проверяем существование
+    await this.findOne(id);
 
-    // Мягкое удаление
     await this.prisma.author.update({
       where: { id },
       data: { isActive: false },

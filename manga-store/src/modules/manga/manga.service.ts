@@ -297,7 +297,7 @@ export class MangaService {
   }
 
   async getReviews(id: number) {
-    const manga = await this.findOne(id); // Проверяем существование манги
+    const manga = await this.findOne(id);
 
     return this.prisma.review.findMany({
       where: { mangaId: id },
@@ -315,7 +315,7 @@ export class MangaService {
   }
 
   async update(id: number, updateMangaDto: UpdateMangaDto): Promise<Manga> {
-    await this.findOne(id); // Проверяем существование
+    await this.findOne(id);
 
     const updateData: any = { ...updateMangaDto };
     if (updateData.price) {
@@ -344,7 +344,7 @@ export class MangaService {
   }
 
   async remove(id: number): Promise<void> {
-    await this.findOne(id); // Проверяем существование
+    await this.findOne(id);
 
     await this.prisma.manga.update({
       where: { id },
@@ -353,7 +353,7 @@ export class MangaService {
   }
 
   async updateStock(id: number, quantity: number): Promise<void> {
-    await this.findOne(id); // Проверяем существование
+    await this.findOne(id);
 
     await this.prisma.manga.update({
       where: { id },
