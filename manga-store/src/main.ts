@@ -9,6 +9,7 @@ import { NextFunction, Request } from 'express';
 import { IResponseWithLayout } from './common/interfaces/IResponseWithLayout';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -35,32 +36,7 @@ async function bootstrap() {
     }),
   );
 
-  const config = new DocumentBuilder()
-    .setTitle('Manga Store API')
-    .setDescription('API документация для интернет-магазина манги')
-    .setVersion('1.0')
-    .addTag('manga', 'Операции с мангой')
-    .addTag('users', 'Операции с пользователями')
-    .addTag('orders', 'Операции с заказами')
-    .addTag('reviews', 'Операции с отзывами')
-    .addTag('authors', 'Операции с авторами')
-    .addServer('http://localhost:3000', 'Development server')
-    .build();
-
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document, {
-    customSiteTitle: 'Manga Store API Documentation',
-    customCss: '.swagger-ui .topbar { display: none }',
-    swaggerOptions: {
-      persistAuthorization: true,
-      displayRequestDuration: true,
-      docExpansion: 'none',
-      filter: true,
-      showExtensions: true,
-      showCommonExtensions: true,
-    },
-  });
-
+  app.useGlobalFilters(new AllExceptionsFilter());
   hbs.registerPartials(join(process.cwd(), 'views', 'partials'));
 
   const mangaCardPartial = readFileSync(
@@ -207,10 +183,41 @@ async function bootstrap() {
     map: { html: 'hbs' },
   });
 
-  const port = configService.get<number>('PORT', 3000);
-  await app.listen(port, () => {
-    console.log('App start at port: ', port);
+  const config = new DocumentBuilder()
+    .setTitle('Manga Store API')
+    .setDescription('RESTful API для интернет-магазина манги')
+    .setVersion('1.0')
+    .addTag('manga', 'Операции с мангой')
+    .addTag('users', 'Операции с пользователями')
+    .addTag('orders', 'Операции с заказами')
+    .addTag('reviews', 'Операции с отзывами')
+    .addTag('authors', 'Операции с авторами')
+    .addServer('http://localhost:3000', 'Development server')
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api/docs', app, document, {
+    swaggerOptions: {
+      persistAuthorization: true,
+      displayRequestDuration: true,
+      docExpansion: 'none',
+      filter: true,
+      showRequestHeaders: true,
+      sortByTags: true,
+    },
+    customSiteTitle: 'Manga Store API Documentation',
+    customCss: `
+      .swagger-ui .topbar { display: none; }
+      .swagger-ui .info { margin: 20px 0; }
+      .swagger-ui .scheme-container { background: #fafafa; padding: 15px; border-radius: 4px; }
+    `,
   });
+
+  const port = configService.get<number>('PORT', 3000);
+  await app.listen(port);
+
+  console.log(`Application is running on: http://localhost:${port}`);
+  console.log(`API Documentation: http://localhost:${port}/api/docs`);
 }
 
 bootstrap();

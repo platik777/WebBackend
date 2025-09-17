@@ -48,7 +48,7 @@ export class AppController {
             mangaData.mangaAuthors?.[0]?.author?.displayName ||
             `${mangaData.mangaAuthors?.[0]?.author?.firstName} ${mangaData.mangaAuthors?.[0]?.author?.lastName}` ||
             'Неизвестен',
-          price: manga.price.toNumber(),
+          price: manga.price,
           image: manga.imageUrl || '/images/placeholder.jpg',
           description: manga.description || '',
           inStock: manga.isAvailable,
@@ -89,7 +89,7 @@ export class AppController {
             mangaData.mangaAuthors?.[0]?.author?.displayName ||
             `${mangaData.mangaAuthors?.[0]?.author?.firstName} ${mangaData.mangaAuthors?.[0]?.author?.lastName}` ||
             'Неизвестен',
-          price: manga.price.toNumber(),
+          price: manga.price,
           image: manga.imageUrl || '/images/placeholder.jpg',
           description: manga.description || '',
           inStock: manga.isAvailable,
@@ -132,7 +132,7 @@ export class AppController {
           mangaData.mangaAuthors?.[0]?.author?.displayName ||
           `${mangaData.mangaAuthors?.[0]?.author?.firstName} ${mangaData.mangaAuthors?.[0]?.author?.lastName}` ||
           'Неизвестен',
-        price: manga.price.toNumber(),
+        price: manga.price,
         image: manga.imageUrl || '/images/placeholder.jpg',
         description: manga.description || '',
         inStock: manga.isAvailable,

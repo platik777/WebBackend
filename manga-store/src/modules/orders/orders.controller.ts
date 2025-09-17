@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
+import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 
 @Controller('orders')
 export class OrdersController {
@@ -48,10 +49,10 @@ export class OrdersController {
   @Patch(':id/status')
   async updateStatus(
     @Param('id', ParseIntPipe) id: number,
-    @Body('status') status: 'PENDING' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED',
+    @Body() updateStatusDto: UpdateOrderStatusDto,
   ) {
     try {
-      return await this.ordersService.updateStatus(id, status);
+      return await this.ordersService.updateStatus(id, updateStatusDto.status);
     } catch (error) {
       throw new NotFoundException('Заказ не найден');
     }

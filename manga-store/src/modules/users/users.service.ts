@@ -1,8 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UserResponseDto } from './dto/user-response.dto';
+import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
+import { PaginatedResponseDto } from '../../common/dto/paginated-response.dto';
+import { PaginationUtil } from '../../common/utils/pagination.util';
 import * as bcrypt from 'bcryptjs';
 
 @Injectable()
@@ -31,12 +35,42 @@ export class UsersService {
     return users.map((user) => new User(user));
   }
 
-  async findOne(id: number): Promise<User | null> {
+  async findAllPaginated(
+    paginationQuery: PaginationQueryDto,
+  ): Promise<PaginatedResponseDto<UserResponseDto>> {
+    const options = PaginationUtil.buildPaginationOptions(paginationQuery);
+    const { skip, take } = PaginationUtil.buildSkipTake(options);
+
+    const [users, total] = await Promise.all([
+      this.prisma.user.findMany({
+        where: { isActive: true },
+        skip,
+        take,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.user.count({ where: { isActive: true } }),
+    ]);
+
+    const userResponses = users.map((user) => new UserResponseDto(new User(user).toPublicProfile()));
+
+    return PaginationUtil.buildPaginatedResponse(
+      userResponses,
+      options,
+      total,
+      '/api/users',
+    );
+  }
+
+  async findOne(id: number): Promise<User> {
     const user = await this.prisma.user.findUnique({
       where: { id },
     });
 
-    return user ? new User(user) : null;
+    if (!user) {
+      throw new NotFoundException(`Пользователь с ID ${id} не найден`);
+    }
+
+    return new User(user);
   }
 
   async findByEmail(email: string): Promise<User | null> {
@@ -47,7 +81,43 @@ export class UsersService {
     return user ? new User(user) : null;
   }
 
+  async getUserOrders(id: number) {
+    await this.findOne(id); 
+
+    return this.prisma.order.findMany({
+      where: { userId: id },
+      include: {
+        orderItems: {
+          include: {
+            manga: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async getUserReviews(id: number) {
+    await this.findOne(id); 
+
+    return this.prisma.review.findMany({
+      where: { userId: id },
+      include: {
+        manga: {
+          select: {
+            id: true,
+            title: true,
+            imageUrl: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
+    await this.findOne(id); // Проверяем существование
+
     const updateData = { ...updateUserDto };
 
     if (updateData.password) {
@@ -63,6 +133,8 @@ export class UsersService {
   }
 
   async remove(id: number): Promise<void> {
+    await this.findOne(id);
+
     // Мягкое удаление - помечаем пользователя как неактивного
     await this.prisma.user.update({
       where: { id },

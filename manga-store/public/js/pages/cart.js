@@ -317,7 +317,6 @@ function proceedToCheckout() {
   window.location.href = '/checkout';
 }
 
-// Показать уведомление (fallback, если нет глобальной функции)
 function showCartNotification(message, type = 'info') {
   if (window.showCartNotification) {
     window.showCartNotification(message, type);

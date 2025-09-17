@@ -1,61 +1,71 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
-import { Order, OrderWithRelations } from './entities/order.entity';
+import { Order } from './entities/order.entity';
 import { CreateOrderDto } from './dto/create-order.dto';
-import { Decimal } from '@prisma/client/runtime/library';
+import { OrderResponseDto } from './dto/order-response.dto';
+import { OrderStatus } from './dto/update-order-status.dto';
+import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
+import { PaginatedResponseDto } from '../../common/dto/paginated-response.dto';
+import { PaginationUtil } from '../../common/utils/pagination.util';
 
 @Injectable()
 export class OrdersService {
   constructor(private prisma: PrismaService) {}
 
   async create(createOrderDto: CreateOrderDto): Promise<Order> {
-    // Рассчитываем общую сумму заказа
-    const totalAmount = createOrderDto.items.reduce((total, item) => {
-      return total.add(new Decimal(item.price).mul(item.quantity));
-    }, new Decimal(0));
+    const totalAmount = createOrderDto.items.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0,
+    );
 
-    // Генерируем номер заказа
-    const orderNumber = Order.generateOrderNumber();
+    // Подготавливаем данные для создания заказа
+    const orderCreateData: any = {
+      totalAmount,
+      shippingAddress: createOrderDto.shippingAddress,
+      shippingCity: createOrderDto.shippingCity,
+      shippingPhone: createOrderDto.shippingPhone,
+      orderItems: {
+        create: createOrderDto.items.map((item) => ({
+          mangaId: item.mangaId,
+          quantity: item.quantity,
+          price: item.price,
+        })),
+      },
+    };
+
+    if (createOrderDto.userId !== undefined) {
+      orderCreateData.userId = createOrderDto.userId;
+    }
+
+    if (createOrderDto.paymentMethod !== undefined) {
+      orderCreateData.paymentMethod = createOrderDto.paymentMethod;
+    }
+
+    if (createOrderDto.customerEmail !== undefined) {
+      orderCreateData.customerEmail = createOrderDto.customerEmail;
+    }
+
+    if (createOrderDto.customerFirstName !== undefined) {
+      orderCreateData.customerFirstName = createOrderDto.customerFirstName;
+    }
+
+    if (createOrderDto.customerLastName !== undefined) {
+      orderCreateData.customerLastName = createOrderDto.customerLastName;
+    }
 
     const orderData = await this.prisma.order.create({
-      data: {
-        orderNumber,
-        status: 'PENDING',
-        totalAmount,
-        userId: createOrderDto.userId,
-        shippingAddress: createOrderDto.shippingAddress,
-        shippingCity: createOrderDto.shippingCity,
-        shippingPhone: createOrderDto.shippingPhone,
-        // Добавляем поля для гостевых заказов
-        customerEmail: createOrderDto.customerEmail,
-        customerFirstName: createOrderDto.customerFirstName,
-        customerLastName: createOrderDto.customerLastName,
-        orderItems: {
-          create: createOrderDto.items.map((item) => ({
-            mangaId: item.mangaId,
-            quantity: item.quantity,
-            price: new Decimal(item.price),
-          })),
-        },
-      },
+      data: orderCreateData,
       include: {
         orderItems: {
           include: {
             manga: true,
           },
         },
-        user: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
-        },
+        user: true,
       },
     });
 
-    return new Order(orderData as OrderWithRelations);
+    return new Order(orderData);
   }
 
   async findAll(): Promise<Order[]> {
@@ -66,21 +76,75 @@ export class OrdersService {
             manga: true,
           },
         },
-        user: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
+        user: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return orders.map((order) => new Order(order));
+  }
+
+  async findAllPaginated(
+    paginationQuery: PaginationQueryDto,
+    filters?: {
+      status?: string;
+    },
+  ): Promise<PaginatedResponseDto<OrderResponseDto>> {
+    const options = PaginationUtil.buildPaginationOptions(paginationQuery);
+    const { skip, take } = PaginationUtil.buildSkipTake(options);
+
+    const where: any = {};
+    if (filters?.status) {
+      where.status = filters.status;
+    }
+
+    const [orders, total] = await Promise.all([
+      this.prisma.order.findMany({
+        where,
+        skip,
+        take,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          orderItems: {
+            include: {
+              manga: true,
+            },
+          },
+          user: true,
+        },
+      }),
+      this.prisma.order.count({ where }),
+    ]);
+
+    const orderResponses = orders.map((order) => new OrderResponseDto(new Order(order)));
+
+    return PaginationUtil.buildPaginatedResponse(
+      orderResponses,
+      options,
+      total,
+      '/api/orders',
+      { status: filters?.status },
+    );
+  }
+
+  async findOne(id: number): Promise<Order> {
+    const order = await this.prisma.order.findUnique({
+      where: { id },
+      include: {
+        orderItems: {
+          include: {
+            manga: true,
           },
         },
-      },
-      orderBy: {
-        createdAt: 'desc',
+        user: true,
       },
     });
 
-    return orders.map((order) => new Order(order as OrderWithRelations));
+    if (!order) {
+      throw new NotFoundException(`Заказ с ID ${id} не найден`);
+    }
+
+    return new Order(order);
   }
 
   async findByUserId(userId: number): Promise<Order[]> {
@@ -93,41 +157,15 @@ export class OrdersService {
           },
         },
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
+      orderBy: { createdAt: 'desc' },
     });
 
-    return orders.map((order) => new Order(order as OrderWithRelations));
+    return orders.map((order) => new Order(order));
   }
 
-  async findOne(id: number): Promise<Order | null> {
-    const order = await this.prisma.order.findUnique({
-      where: { id },
-      include: {
-        orderItems: {
-          include: {
-            manga: true,
-          },
-        },
-        user: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
-        },
-      },
-    });
+  async updateStatus(id: number, status: OrderStatus): Promise<Order> {
+    await this.findOne(id); // Проверяем существование
 
-    return order ? new Order(order as OrderWithRelations) : null;
-  }
-
-  async updateStatus(
-    id: number,
-    status: 'PENDING' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED',
-  ): Promise<Order> {
     const order = await this.prisma.order.update({
       where: { id },
       data: { status },
@@ -137,57 +175,49 @@ export class OrdersService {
             manga: true,
           },
         },
-        user: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
-        },
+        user: true,
       },
     });
 
-    return new Order(order as OrderWithRelations);
+    return new Order(order);
   }
 
   async remove(id: number): Promise<void> {
+    await this.findOne(id); // Проверяем существование
+
     await this.prisma.order.delete({
       where: { id },
     });
   }
 
   async getOrdersStats() {
-    const [
-      totalOrders,
-      pendingOrders,
-      shippedOrders,
-      deliveredOrders,
-      totalRevenue,
-      guestOrders,
-      registeredUserOrders,
-    ] = await Promise.all([
+    const [totalOrders, totalRevenue, ordersByStatus] = await Promise.all([
       this.prisma.order.count(),
-      this.prisma.order.count({ where: { status: 'PENDING' } }),
-      this.prisma.order.count({ where: { status: 'SHIPPED' } }),
-      this.prisma.order.count({ where: { status: 'DELIVERED' } }),
       this.prisma.order.aggregate({
-        where: { status: 'DELIVERED' },
-        _sum: { totalAmount: true },
+        _sum: {
+          totalAmount: true,
+        },
       }),
-      this.prisma.order.count({ where: { userId: null } }), // Гостевые заказы
-      this.prisma.order.count({ where: { userId: { not: null } } }), // Заказы пользователей
+      this.prisma.order.groupBy({
+        by: ['status'],
+        _count: {
+          id: true,
+        },
+      }),
     ]);
+
+    const avgOrderValue = totalOrders > 0 ? (totalRevenue._sum.totalAmount?.toNumber() || 0) / totalOrders : 0;
+
+    const statusCounts = ordersByStatus.reduce((acc, item) => {
+      acc[item.status.toLowerCase()] = item._count.id;
+      return acc;
+    }, {} as Record<string, number>);
 
     return {
       totalOrders,
-      pendingOrders,
-      shippedOrders,
-      deliveredOrders,
-      totalRevenue: totalRevenue._sum.totalAmount || new Decimal(0),
-      guestOrders,
-      registeredUserOrders,
-      guestOrdersPercentage: totalOrders > 0 ? (guestOrders / totalOrders * 100).toFixed(1) : 0,
+      totalRevenue: totalRevenue._sum.totalAmount?.toNumber() || 0,
+      avgOrderValue: Number(avgOrderValue.toFixed(2)),
+      ordersByStatus: statusCounts,
     };
   }
 }
