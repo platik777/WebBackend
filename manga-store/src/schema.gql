@@ -1,0 +1,411 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+"""Автор манги"""
+type AuthorType {
+  """Отображаемое имя автора"""
+  displayName: String!
+
+  """Имя автора"""
+  firstName: String!
+
+  """Уникальный идентификатор автора"""
+  id: ID!
+
+  """Фамилия автора"""
+  lastName: String!
+
+  """Псевдоним автора"""
+  pseudonym: String
+}
+
+"""Входные данные для создания манги"""
+input CreateMangaInput {
+  """ID автора"""
+  authorId: Int!
+
+  """Описание манги"""
+  description: String
+
+  """Цена со скидкой"""
+  discountPrice: Float
+
+  """ID жанра"""
+  genreId: Int!
+
+  """URL изображения обложки"""
+  imageUrl: String
+
+  """ISBN манги"""
+  isbn: String
+
+  """Язык публикации"""
+  language: String!
+
+  """Количество страниц"""
+  pages: Int
+
+  """Цена манги"""
+  price: Float!
+
+  """ID издательства"""
+  publisherId: Int!
+
+  """Количество на складе"""
+  stock: Int!
+
+  """Название манги"""
+  title: String!
+}
+
+"""Входные данные для создания отзыва"""
+input CreateReviewInput {
+  """Текст отзыва"""
+  comment: String
+
+  """ID манги"""
+  mangaId: ID!
+
+  """Рейтинг от 1 до 5"""
+  rating: Int!
+
+  """ID пользователя"""
+  userId: ID!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+"""Жанр манги"""
+type GenreType {
+  """Описание жанра"""
+  description: String
+
+  """Уникальный идентификатор жанра"""
+  id: ID!
+
+  """Название жанра"""
+  name: String!
+}
+
+"""Входные данные для фильтрации манги"""
+input MangaFiltersInput {
+  """Фильтр по автору"""
+  author: String
+
+  """Фильтр по жанру"""
+  genre: String
+
+  """Только товары в наличии"""
+  inStock: Boolean
+
+  """Порядок сортировки (asc, desc)"""
+  order: String
+
+  """Максимальная цена"""
+  priceMax: Float
+
+  """Минимальная цена"""
+  priceMin: Float
+
+  """Поиск по названию"""
+  search: String
+
+  """Сортировка (price, title, createdAt)"""
+  sort: String
+}
+
+"""Манга"""
+type MangaType {
+  """Авторы манги"""
+  authors: [AuthorType!]!
+
+  """Средний рейтинг (умножен на 10)"""
+  averageRating: Int!
+
+  """Дата создания записи"""
+  createdAt: DateTime!
+
+  """Описание манги"""
+  description: String
+
+  """Цена со скидкой"""
+  discountPrice: Float
+
+  """Жанры манги"""
+  genres: [GenreType!]!
+
+  """Уникальный идентификатор манги"""
+  id: ID!
+
+  """URL изображения обложки"""
+  imageUrl: String
+
+  """Активна ли манга для продажи"""
+  isActive: Boolean!
+
+  """Доступна ли для покупки"""
+  isAvailable: Boolean!
+
+  """Рекомендуемая ли манга"""
+  isFeatured: Boolean!
+
+  """ISBN манги"""
+  isbn: String
+
+  """Язык публикации"""
+  language: String!
+
+  """Количество страниц"""
+  pages: Int
+
+  """Цена манги"""
+  price: Float!
+
+  """Дата публикации"""
+  publishDate: DateTime
+
+  """Издательство"""
+  publisher: PublisherType
+
+  """Отзывы о манге"""
+  reviews: [ReviewType!]!
+
+  """Количество отзывов"""
+  reviewsCount: Int!
+
+  """Количество на складе"""
+  stock: Int!
+
+  """Название манги"""
+  title: String!
+
+  """Дата последнего обновления"""
+  updatedAt: DateTime!
+}
+
+type Mutation {
+  """Одобрить отзыв (для модерации)"""
+  approveReview(id: ID!): Boolean!
+
+  """Создать новую мангу"""
+  createManga(input: CreateMangaInput!): MangaType!
+
+  """Создать новый отзыв"""
+  createReview(input: CreateReviewInput!): ReviewType!
+
+  """Удалить отзыв"""
+  deleteReview(id: ID!): Boolean!
+
+  """Добавить мангу в рекомендуемые"""
+  featureManga(id: ID!): Boolean!
+
+  """Скрыть мангу (сделать неактивной)"""
+  hideManga(id: ID!): Boolean!
+
+  """Опубликовать мангу (сделать активной)"""
+  publishManga(id: ID!): Boolean!
+
+  """Отклонить отзыв (для модерации)"""
+  rejectReview(id: ID!): Boolean!
+
+  """Убрать мангу из рекомендуемых"""
+  unfeatureManga(id: ID!): Boolean!
+
+  """Обновить информацию о манге"""
+  updateManga(id: ID!, input: UpdateMangaInput!): MangaType!
+
+  """Обновить количество манги на складе"""
+  updateMangaStock(id: ID!, stock: Int!): Boolean!
+
+  """Обновить существующий отзыв"""
+  updateReview(id: ID!, input: UpdateReviewInput!): ReviewType!
+}
+
+"""Информация о пагинации"""
+type PaginationInfoType {
+  """Текущая страница"""
+  currentPage: Int!
+
+  """Есть ли следующая страница"""
+  hasNextPage: Boolean!
+
+  """Есть ли предыдущая страница"""
+  hasPreviousPage: Boolean!
+
+  """Количество элементов на странице"""
+  pageSize: Int!
+
+  """Общее количество элементов"""
+  totalCount: Int!
+
+  """Общее количество страниц"""
+  totalPages: Int!
+}
+
+"""Издательство"""
+type PublisherType {
+  """Страна издательства"""
+  country: String
+
+  """Описание издательства"""
+  description: String
+
+  """Уникальный идентификатор издательства"""
+  id: ID!
+
+  """Активно ли издательство"""
+  isActive: Boolean!
+
+  """Название издательства"""
+  name: String!
+
+  """Веб-сайт издательства"""
+  website: String
+}
+
+type Query {
+  """Получить доступную для покупки мангу"""
+  availableManga: [MangaType!]!
+
+  """Получить рекомендуемую мангу"""
+  featuredManga: [MangaType!]!
+
+  """Получить список всей манги с фильтрацией"""
+  manga(filters: MangaFiltersInput): [MangaType!]!
+
+  """Получить мангу по ID"""
+  mangaById(id: ID!): MangaType!
+
+  """Получить отзыв по ID"""
+  reviewById(id: ID!): ReviewType!
+
+  """Получить статистику отзывов для конкретной манги"""
+  reviewStats(mangaId: ID!): ReviewStatsType!
+
+  """Получить список отзывов с фильтрацией"""
+  reviews(filters: ReviewFiltersInput): [ReviewType!]!
+
+  """Получить все отзывы для конкретной манги"""
+  reviewsByManga(mangaId: ID!): [ReviewType!]!
+
+  """Получить все отзывы конкретного пользователя"""
+  reviewsByUser(userId: ID!): [ReviewType!]!
+
+  """Получить отзывы с высоким рейтингом"""
+  topReviews(minRating: Int! = 4): [ReviewType!]!
+}
+
+"""Входные данные для фильтрации отзывов"""
+input ReviewFiltersInput {
+  """Фильтр по ID манги"""
+  mangaId: ID
+
+  """Минимальный рейтинг"""
+  minRating: Int
+
+  """Фильтр по рейтингу"""
+  rating: Int
+
+  """Фильтр по ID пользователя"""
+  userId: ID
+}
+
+"""Статистика отзывов"""
+type ReviewStatsType {
+  """Средний рейтинг (умножен на 10 для точности)"""
+  averageRating: Int!
+
+  """Распределение рейтингов [1, 2, 3, 4, 5]"""
+  ratingDistribution: [Int!]!
+
+  """Общее количество отзывов"""
+  totalReviews: Int!
+}
+
+"""Отзыв на мангу"""
+type ReviewType {
+  """Текст отзыва"""
+  comment: String
+
+  """Дата создания отзыва"""
+  createdAt: DateTime!
+
+  """Уникальный идентификатор отзыва"""
+  id: ID!
+
+  """Информация о манге"""
+  manga: MangaType!
+
+  """ID манги, к которой относится отзыв"""
+  mangaId: ID!
+
+  """Рейтинг от 1 до 5"""
+  rating: Int!
+
+  """Дата последнего обновления отзыва"""
+  updatedAt: DateTime!
+
+  """Информация о пользователе"""
+  user: UserType!
+
+  """ID пользователя, оставившего отзыв"""
+  userId: ID!
+}
+
+"""Входные данные для обновления манги"""
+input UpdateMangaInput {
+  """Описание манги"""
+  description: String
+
+  """Цена со скидкой"""
+  discountPrice: Float
+
+  """URL изображения обложки"""
+  imageUrl: String
+
+  """Активна ли манга для продажи"""
+  isActive: Boolean
+
+  """Рекомендуемая ли манга"""
+  isFeatured: Boolean
+
+  """Язык публикации"""
+  language: String
+
+  """Цена манги"""
+  price: Float
+
+  """Количество на складе"""
+  stock: Int
+
+  """Название манги"""
+  title: String
+}
+
+"""Входные данные для обновления отзыва"""
+input UpdateReviewInput {
+  """Текст отзыва"""
+  comment: String
+
+  """Рейтинг от 1 до 5"""
+  rating: Int
+}
+
+"""Пользователь (краткая информация)"""
+type UserType {
+  """Имя пользователя"""
+  firstName: String!
+
+  """Полное имя пользователя"""
+  fullName: String!
+
+  """Уникальный идентификатор пользователя"""
+  id: ID!
+
+  """Фамилия пользователя"""
+  lastName: String!
+}
