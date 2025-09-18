@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{title}} - Manga Store</title>
   {{> styles}}
+
+  {{#if
+    serverElapsedTime}}
+  <meta name="server-elapsed-time" content="{{serverElapsedTime}}">
+  {{/if
+  }}
 </head>
 <body>
 {{> header}}
@@ -17,5 +23,12 @@
 
 {{> footer}}
 {{> scripts}}
+{{#if
+  serverElapsedTime}}
+  <script>
+    window.serverElapsedTime = {{serverElapsedTime}};
+  </script>
+{{/if
+}}
 </body>
 </html>
