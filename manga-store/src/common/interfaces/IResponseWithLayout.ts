@@ -4,4 +4,5 @@ export interface IResponseWithLayout extends Response {
 
 interface ILocalsLayout {
   layout: string;
+  serverElapsedTime?: number;
 }

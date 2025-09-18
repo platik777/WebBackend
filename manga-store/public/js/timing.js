@@ -1,59 +1,116 @@
 (function() {
-  const pageLoadStart = performance.now();
+  const navigationStart = performance.timing?.navigationStart || performance.timeOrigin || Date.now();
 
   function displayTimingInfo() {
-    const pageLoadEnd = performance.now();
-    const clientTime = Math.round(pageLoadEnd - pageLoadStart);
+    const currentTime = performance.now();
 
-    // Получаем время сервера из мета-тега или переменной
+    const timing = performance.timing;
+    let clientTime;
+
+    if (timing) {
+      clientTime = Math.round(timing.domContentLoadedEventEnd - timing.navigationStart);
+
+      if (clientTime <= 0 || !timing.domContentLoadedEventEnd) {
+        clientTime = Math.round(currentTime);
+      }
+    } else {
+      clientTime = Math.round(currentTime);
+    }
+
     const serverTimeElement = document.querySelector('meta[name="server-elapsed-time"]');
     const serverTime = serverTimeElement ?
       parseInt(serverTimeElement.getAttribute('content')) :
       (window.serverElapsedTime || null);
 
-    // Создаем элемент для отображения времени
+    console.log('Server time from meta/window:', serverTime);
+
     const timingElement = document.createElement('div');
     timingElement.id = 'timing-info';
     timingElement.style.cssText = `
       position: fixed;
       bottom: 20px;
       right: 20px;
-      background: rgba(0, 0, 0, 0.8);
+      background: rgba(0, 0, 0, 0.9);
       color: white;
-      padding: 10px 15px;
-      border-radius: 5px;
-      font-size: 12px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 13px;
       z-index: 10000;
-      font-family: monospace;
+      font-family: 'Courier New', monospace;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.1);
     `;
 
     let timingText = `Клиент: ${clientTime}ms`;
-    if (serverTime !== null) {
+    if (serverTime !== null && serverTime > 0) {
       timingText = `Сервер: ${serverTime}ms | ${timingText}`;
+    }
+
+    if (timing && timing.loadEventEnd > 0) {
+      const totalLoadTime = Math.round(timing.loadEventEnd - timing.navigationStart);
+      timingText += ` | Полная загрузка: ${totalLoadTime}ms`;
     }
 
     timingElement.innerHTML = timingText;
 
-    // Добавляем элемент на страницу
+    const existingElement = document.getElementById('timing-info');
+    if (existingElement) {
+      existingElement.remove();
+    }
+
     document.body.appendChild(timingElement);
 
-    // Автоматически скрываем через 5 секунд
     setTimeout(() => {
       if (timingElement && timingElement.parentNode) {
-        timingElement.remove();
+        timingElement.style.animation = 'fadeOut 0.5s ease';
+        setTimeout(() => {
+          if (timingElement.parentNode) {
+            timingElement.remove();
+          }
+        }, 500);
       }
-    }, 5000);
+    }, 7000);
 
-    // Добавляем возможность скрыть по клику
     timingElement.addEventListener('click', () => {
-      timingElement.remove();
+      timingElement.style.animation = 'fadeOut 0.3s ease';
+      setTimeout(() => {
+        if (timingElement.parentNode) {
+          timingElement.remove();
+        }
+      }, 300);
     });
+
+    if (!document.querySelector('#timing-animations')) {
+      const styleSheet = document.createElement('style');
+      styleSheet.id = 'timing-animations';
+      styleSheet.textContent = `
+        @keyframes fadeOut {
+          from { opacity: 1; transform: translateY(0); }
+          to { opacity: 0; transform: translateY(10px); }
+        }
+      `;
+      document.head.appendChild(styleSheet);
+    }
   }
 
-  // Ждем полной загрузки страницы
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', displayTimingInfo);
-  } else {
-    displayTimingInfo();
+  function initializeTiming() {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        // Небольшая задержка, чтобы браузер успел обновить timing
+        setTimeout(displayTimingInfo, 10);
+      });
+
+      window.addEventListener('load', () => {
+        setTimeout(() => {
+          displayTimingInfo();
+        }, 100);
+      });
+    } else if (document.readyState === 'interactive') {
+      setTimeout(displayTimingInfo, 10);
+    } else {
+      displayTimingInfo();
+    }
   }
+
+  initializeTiming();
 })();

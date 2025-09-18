@@ -1,4 +1,5 @@
-import { Module } from '@nestjs/common';
+// src/app.module.ts
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
@@ -15,7 +16,8 @@ import { AuthorsModule } from './modules/authors/authors.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { S3Module } from './modules/s3/s3.module';
 
-import { TimingInterceptor } from './common/interceptors/timing.interceptor';
+// Импортируем новый middleware
+import { TimingMiddleware } from './common/middleware/timing.middleware';
 import { ETagInterceptor } from './common/interceptors/etag.interceptor';
 import { CacheControlInterceptor } from './common/interceptors/cache-control.interceptor';
 
@@ -58,10 +60,7 @@ import { CacheControlInterceptor } from './common/interceptors/cache-control.int
   controllers: [AppController],
   providers: [
     AppService,
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: TimingInterceptor,
-    },
+    // Убираем TimingInterceptor, заменяем на TimingMiddleware
     {
       provide: APP_INTERCEPTOR,
       useClass: ETagInterceptor,
@@ -72,4 +71,10 @@ import { CacheControlInterceptor } from './common/interceptors/cache-control.int
     },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(TimingMiddleware)
+      .forRoutes('*'); // Применяем ко всем маршрутам
+  }
+}

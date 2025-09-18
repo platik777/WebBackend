@@ -39,7 +39,10 @@ export class TimingInterceptor implements NestInterceptor {
         } else if (isPageRender) {
           if (response.locals) {
             response.locals.serverElapsedTime = elapsed;
-            console.log("Message from Interceptor with elapsed time", elapsed);
+            console.log("✅ ServerElapsedTime установлено:", elapsed);
+            console.log("✅ response.locals:", response.locals);
+          } else {
+            console.log("❌ response.locals не существует!");
           }
         }
       }),
